@@ -1,12 +1,13 @@
 package model
 
-type InstanceRequest struct {
+type Box struct {
   Id string
   Type string
-  Src string
+  Version string
 }
 
-type InstanceResponse struct {
+// TODO: show compile error
+type Response struct {
   Id string
   Status string
   Stdout string
