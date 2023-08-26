@@ -7,16 +7,18 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"markisa/model"
 	"fmt"
+	"io"
 	"os"
 	"os/exec"
+	"path"
 	"strings"
 	"time"
 )
 
 func main() {
-	// io.ReadAll(os.Stdin)
-	buff, err := os.ReadFile("./hello-world.exe")
+	buff, err := io.ReadAll(os.Stdin)
 	if err != nil {
 		panic(err)
 	}
@@ -25,40 +27,50 @@ func main() {
 	if err != nil {
 		panic(err)
 	}
-	prog := tempDir + "\\prog.exe"
+
+	prog := path.Join(tempDir, "prog")
 	if err := os.WriteFile(prog, buff, 0755); err != nil {
 		panic(err)
 	}
-
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second*60)
+  
+  timeLimit := time.Second*10
+	ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 	defer cancel()
 
 	var stdout strings.Builder
 	var stderr strings.Builder
 
-	status := "DONE"
-
-	cmd := exec.CommandContext(ctx, ".\\prog.exe")
+	cmd := exec.CommandContext(ctx, "./prog")
 	cmd.Dir = tempDir
 
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-	if err := cmd.Start(); err != nil {
-		panic(err)
-	}
+  status := "SUCCESS"
+  if err := cmd.Run(); err != nil {
+    status = "ERROR"
+    stderr.WriteString(err.Error())
+  } else if err := ctx.Err(); err != nil {
+    switch err {
+      case context.Canceled:
+          status = "CANCELED"
+      case context.DeadlineExceeded:
+          status = "TIMEOUT"
+      default:
+          status = "ERROR"
+    }
+    stderr.WriteString(err.Error())
+  } 
 
-	if err := cmd.Wait(); err != nil {
-		panic(err)
-	}
 
-	resp := Response{
+  resp := model.Response{
 		Status: status,
 		Stdout: stdout.String(),
 		Stderr: stderr.String(),
 	}
 
 	jsonified, _ := json.Marshal(resp)
-	// compressed := util.Compress(jsonified)
-	fmt.Println(string(jsonified))
+
+  // send result to stdout and catch it outside of container
+  fmt.Print(string(jsonified))
 }
