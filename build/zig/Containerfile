@@ -1,6 +1,6 @@
 FROM docker.io/library/debian:bookworm-slim
 
-RUN apt update && apt -y install curl jq aria2 tar xz-utils 
+RUN apt update && DEBIAN_FRONTEND=noninteractive apt -y install curl jq aria2 tar xz-utils 
 
 COPY zig-setup.bash .
 RUN bash zig-setup.bash
