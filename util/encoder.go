@@ -4,14 +4,26 @@ import (
 	"bytes"
 	"compress/gzip"
 	"io"
+  "os"
 )
 
-func Compress(s []byte) []byte {
+func CreateTempDir() (string, error) {
+	tempDir, err := os.MkdirTemp("", "box_")
+	if err != nil {
+    return "", err
+	}
+  return tempDir, nil
+}
+
+func Compress(s []byte) ([]byte, error) {
 	buff := bytes.Buffer{}
 	compressed := gzip.NewWriter(&buff)
-	compressed.Write(s)
+  if _, err := compressed.Write(s); err != nil {
+    return nil, err
+  }
+
 	compressed.Close()
-	return buff.Bytes()
+	return buff.Bytes(), nil
 }
 
 func Decompress(s []byte) ([]byte, error) {
