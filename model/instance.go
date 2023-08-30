@@ -6,15 +6,23 @@ type Box struct {
 	Version string
 }
 
-type Request struct {
-  Token string
-  Archive string
-  Type string
+// buil stage model
+type BuildResult struct {
+  ExitCode int
+  Stdout string
+  Stderr string
 }
 
-// TODO: show compile error
-type Response struct {
-	Status string
-	Stdout string
-	Stderr string
+// run stage model
+type RunResult struct {
+  ExitCode int
+  Status string
+  Stdout string
+  Stderr string
+}
+
+// Run endpoint model
+type RunResponse struct {
+  Build BuildResult
+  Run RunResult
 }

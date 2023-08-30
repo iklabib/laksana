@@ -2,46 +2,54 @@ package zig
 
 import (
 	"markisa/container"
+	"markisa/model"
 	"markisa/util"
 	"os"
 	"os/exec"
 	"path"
+	"strings"
 )
 
-func Run(archive string) (string, string, error){
+func Run(archive string) model.RunResponse {
   tempDir, _ := util.CreateTempDir()
-  bin, err := Build(archive, tempDir)
-  if (err != nil) {
-    return "", "", err
+  bin, buildResult := Build(archive, tempDir)
+
+  runResponse := model.RunResponse {
+    Build: buildResult,
   }
 
-  stdout, stderr, err := container.RunContainer(bin, "localhost/markisa:zig")
-  if err != nil {
-    return "", "", err
+  if (buildResult.ExitCode != 0) {
+    return runResponse
   }
-  return stdout, stderr, err
+
+  runResponse.Run = container.RunContainer(bin, "localhost/markisa:zig")
+  return runResponse
 }
 
-func Build(archive string, dir string) ([]byte, error) {
+func Build(archive string, dir string) ([]byte, model.BuildResult) {
   srcPath := path.Join(dir, "prog.zig")
   src, _ := os.Create(srcPath)
   defer src.Close()
-  if _, err := src.WriteString(archive); err != nil {
-    panic(err)
-  }
+  src.WriteString(archive)
 
-  // TODO: incremental build
+  var stdout strings.Builder
+  var stderr strings.Builder
+
   cmd := exec.Command("zig", "build-exe", "prog.zig")
+  cmd.Stdout = &stdout
+  cmd.Stderr = &stderr
   cmd.Dir = dir
-  if err := cmd.Run(); err != nil {
-    return nil, err
+
+  err := cmd.Run(); 
+
+  buildResult := model.BuildResult {
+    ExitCode: util.GetExitCode(&err),
+    Stdout: stdout.String(),
+    Stderr: stderr.String(),
   }
 
-  // TODO: return compile error stage
   prog, _ := os.ReadFile(path.Join(dir, "prog"))
-  os.RemoveAll(dir)
-
-  return prog, nil
+  return prog, buildResult
 }
 
 func initProject(dir string) error {
