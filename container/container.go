@@ -2,11 +2,12 @@ package container
 
 import (
 	"bytes"
+	"encoding/json"
+	"markisa/model"
 	"os/exec"
-	"strings"
 )
 
-func RunContainer(src []byte, image string) (string, string, error) {
+func RunContainer(src []byte, image string) model.RunResult {
 	cmd := exec.Command(
 		"podman",
 		"run",
@@ -15,15 +16,13 @@ func RunContainer(src []byte, image string) (string, string, error) {
 		image,
 	)
 
-	var stdout strings.Builder
-	var stderr strings.Builder
+	var stdout bytes.Buffer
 	cmd.Stdin = bytes.NewReader(src)
 	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
 
-	if err := cmd.Run(); err != nil {
-		return "", "", err
-	}
+	cmd.Run();
+  runResult := model.RunResult{}
+  json.Unmarshal(stdout.Bytes(), &runResult)
 
-	return stdout.String(), stderr.String(), nil
+  return runResult
 }
