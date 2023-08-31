@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"markisa/runner/zig"
+	cLang "markisa/runner/c"
 	"mime/multipart"
 	"os"
 	"time"
@@ -87,7 +88,18 @@ func Run(c echo.Context) error {
     fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
 
     return c.JSON(200, result)
+
+  case "c":
+    start := time.Now()
+    ar := string(archive)
+    result := cLang.Run(ar)
+    c.Response().Header().Set("Content-Type", "application/json")
+
+    fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
+
+    return c.JSON(200, result)
   }
+
   return nil
 }
 
