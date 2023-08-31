@@ -50,11 +50,7 @@ func main() {
   exitCode := 0
   status := "SUCCESS"
   if err := cmd.Run(); err != nil {
-    status = "ERROR"
-    exitCode = util.GetExitCode(&err)
-    stderr.WriteString(err.Error())
-  } else if err := ctx.Err(); err != nil {
-    switch err {
+    switch ctx.Err() {
       case context.Canceled:
           status = "CANCELED"
       case context.DeadlineExceeded:
@@ -64,8 +60,7 @@ func main() {
     }
     exitCode = util.GetExitCode(&err)
     stderr.WriteString(err.Error())
-  } 
-
+  }
 
   resp := model.RunResult {
     ExitCode: exitCode,
