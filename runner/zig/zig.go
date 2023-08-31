@@ -22,7 +22,7 @@ func Run(archive string) model.RunResponse {
     return runResponse
   }
 
-  runResponse.Run = container.RunContainer(bin, "localhost/markisa:zig")
+  runResponse.Run = container.RunContainer(bin, "localhost/markisa:common")
   return runResponse
 }
 
