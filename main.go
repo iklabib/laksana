@@ -3,10 +3,11 @@ package main
 import (
 	"fmt"
 	"io"
-	"markisa/runner/zig"
 	cLang "markisa/runner/c"
+	"markisa/runner/zig"
 	"mime/multipart"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
@@ -31,6 +32,7 @@ func main() {
   e := echo.New()
 
   e.Use(middleware.Gzip())
+  e.Use(middleware.CORS())
   e.Use(session.Middleware(sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))))
 
   e.GET("/", Root)
@@ -66,18 +68,13 @@ func Run(c echo.Context) error {
   visitorId := getSession(&c).Values["visitorId"].(string)
   requestTimes[visitorId] = time.Now()
 
+  reqType := strings.ToLower(c.FormValue("type"))
+  archive := c.FormValue("archive")
 
-  reqType := c.FormValue("type")
-  reqArchive, err := c.FormFile("archive")
-  if err != nil {
-    return err
-  }
-
-  archive, err := ReadRequestFile(reqArchive)
-  if err != nil {
-    return err
-  }
-
+  // archive, err := ReadRequestFile(reqArchive)
+  // if err != nil {
+  //   return err
+  // }
   switch reqType {
   case "zig":
     start := time.Now()
