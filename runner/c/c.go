@@ -6,7 +6,7 @@ import (
 	"markisa/util"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -27,7 +27,7 @@ func Run(archive string) model.RunResponse {
 }
 
 func Build(archive string, dir string) ([]byte, model.BuildResult) {
-  srcPath := path.Join(dir, "prog.c")
+  srcPath := filepath.Join(dir, "prog.c")
   src, _ := os.Create(srcPath)
   defer src.Close()
   src.WriteString(archive)
@@ -35,8 +35,7 @@ func Build(archive string, dir string) ([]byte, model.BuildResult) {
   var stdout strings.Builder
   var stderr strings.Builder
 
-  // I just don't feel like to install clang or gcc
-  cmd := exec.Command("zig", "cc", "prog.c", "-o", "prog")
+  cmd := exec.Command("gcc", "prog.c", "-o", "prog")
   cmd.Stdout = &stdout
   cmd.Stderr = &stderr
   cmd.Dir = dir
@@ -49,6 +48,6 @@ func Build(archive string, dir string) ([]byte, model.BuildResult) {
     Stderr: stderr.String(),
   }
 
-  prog, _ := os.ReadFile(path.Join(dir, "./prog"))
+  prog, _ := os.ReadFile(filepath.Join(dir, "./prog"))
   return prog, buildResult
 }

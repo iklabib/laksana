@@ -6,7 +6,7 @@ import (
 	"markisa/util"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 )
 
@@ -27,7 +27,7 @@ func Run(archive string) model.RunResponse {
 }
 
 func Build(archive string, dir string) ([]byte, model.BuildResult) {
-  srcPath := path.Join(dir, "prog.zig")
+  srcPath := filepath.Join(dir, "prog.zig")
   src, _ := os.Create(srcPath)
   defer src.Close()
   src.WriteString(archive)
@@ -48,7 +48,7 @@ func Build(archive string, dir string) ([]byte, model.BuildResult) {
     Stderr: stderr.String(),
   }
 
-  prog, _ := os.ReadFile(path.Join(dir, "prog"))
+  prog, _ := os.ReadFile(filepath.Join(dir, "prog"))
   return prog, buildResult
 }
 
