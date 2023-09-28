@@ -13,7 +13,7 @@ import (
 	"markisa/util"
 	"os"
 	"os/exec"
-	"path"
+	"path/filepath"
 	"strings"
 	"time"
 )
@@ -29,12 +29,12 @@ func main() {
 		panic(err)
 	}
 
-	prog := path.Join(tempDir, "prog")
+	prog := filepath.Join(tempDir, "prog")
 	if err := os.WriteFile(prog, buff, 0755); err != nil {
 		panic(err)
 	}
   
-  timeLimit := time.Second*10
+	timeLimit := time.Second*10
 	ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 	defer cancel()
 
