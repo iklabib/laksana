@@ -3,7 +3,6 @@ package main
 import (
 	"fmt"
 	"io"
-	cLang "markisa/runner/c"
 	"markisa/runner/zig"
 	"mime/multipart"
 	"os"
@@ -69,17 +68,25 @@ func Run(c echo.Context) error {
   requestTimes[visitorId] = time.Now()
 
   reqType := strings.ToLower(c.FormValue("type"))
-  archive := c.FormValue("archive")
+  file, err := c.FormFile("src")
+  if err != nil {
+    c.JSON(500, "Error occured when handling source file")
+  }
 
-  // archive, err := ReadRequestFile(reqArchive)
-  // if err != nil {
-  //   return err
-  // }
+  if file == nil {
+    c.JSON(400, "No file provided")
+  }
+
+  src, err := ReadRequestFile(file)
+  if (err != nil) {
+    c.JSON(500, "Error occured when handling source file")
+  }
+
   switch reqType {
   case "zig":
     start := time.Now()
-    ar := string(archive)
-    result := zig.Run(ar)
+
+    result := zig.Run(src)
     c.Response().Header().Set("Content-Type", "application/json")
 
     fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
@@ -88,8 +95,7 @@ func Run(c echo.Context) error {
 
   case "c":
     start := time.Now()
-    ar := string(archive)
-    result := cLang.Run(ar)
+    result := c.Run(src)
     c.Response().Header().Set("Content-Type", "application/json")
 
     fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
@@ -100,16 +106,16 @@ func Run(c echo.Context) error {
   return nil
 }
 
-func ReadRequestFile(fileHeader *multipart.FileHeader) ([]byte, error) {
+func ReadRequestFile(fileHeader *multipart.FileHeader) (string, error) {
   file, err := fileHeader.Open()
   if err != nil {
-    return nil, err
+    return "", err
   }
   defer file.Close()
-  
+
   if file, err := io.ReadAll(file); err != nil {
-    return nil, err
+    return "", err
   } else {
-    return file, nil
+    return string(file), nil
   }
 }
