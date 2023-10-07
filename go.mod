@@ -1,9 +1,8 @@
 module markisa
 
-go 1.21.3
+go 1.21.4
 
 require (
-	github.com/google/uuid v1.4.0
 	github.com/gorilla/sessions v1.2.2
 	github.com/joho/godotenv v1.5.1
 	github.com/labstack/echo-contrib v0.15.0
