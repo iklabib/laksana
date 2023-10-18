@@ -10,7 +10,7 @@ import (
 	CRunner "markisa/runner/c"
 	ZigRunner "markisa/runner/zig"
 
-	"github.com/labstack/echo"
+	"github.com/labstack/echo/v4"
 )
 
 func Run(c echo.Context) error {
