@@ -4,19 +4,14 @@ import (
 	"os"
 
 	"github.com/gorilla/sessions"
-	"github.com/joho/godotenv"
 	"github.com/labstack/echo-contrib/session"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 
-	routes "markisa/routes"
+	routes "gitlab.com/iklabib/markisa/routes"
 )
 
 func main() {
-	if err := godotenv.Load(); err != nil {
-		panic(err)
-	}
-
 	PORT := os.Getenv("PORT")
 	BASE_URL := os.Getenv("BASE_URL")
 	URL := BASE_URL + ":" + PORT
@@ -35,5 +30,5 @@ func main() {
 	e.POST("/run", routes.Run)
 
 	e.GET("/share/:id", routes.GetFile)
-	e.POST("/share")
+	e.POST("/share", routes.ShareFile)
 }

@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	CRunner "markisa/runner/c"
-	ZigRunner "markisa/runner/zig"
+	CRunner "gitlab.com/iklabib/markisa/runner/c"
+	ZigRunner "gitlab.com/iklabib/markisa/runner/zig"
 
 	"github.com/labstack/echo/v4"
 )

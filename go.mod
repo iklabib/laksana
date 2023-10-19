@@ -1,18 +1,14 @@
-module markisa
+module gitlab.com/iklabib/markisa
 
 go 1.21.4
 
 require (
 	github.com/gorilla/sessions v1.2.2
-	github.com/joho/godotenv v1.5.1
-	github.com/labstack/echo v3.3.10+incompatible
 	github.com/labstack/echo-contrib v0.15.0
 	github.com/labstack/echo/v4 v4.11.3
-	honnef.co/go/tools v0.4.6
 )
 
 require (
-	github.com/BurntSushi/toml v1.3.2 // indirect
 	github.com/dchest/uniuri v1.2.0
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/gorilla/context v1.1.2 // indirect
@@ -23,11 +19,8 @@ require (
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasttemplate v1.2.2 // indirect
 	golang.org/x/crypto v0.15.0 // indirect
-	golang.org/x/exp/typeparams v0.0.0-20231110203233-9a3e6036ecaa // indirect
-	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.18.0 // indirect
 	golang.org/x/sys v0.14.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.4.0 // indirect
-	golang.org/x/tools v0.15.0 // indirect
 )
