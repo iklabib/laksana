@@ -3,7 +3,7 @@ package container
 import (
 	"bytes"
 	"encoding/json"
-	"markisa/model"
+	"gitlab.com/iklabib/markisa/model"
 	"os/exec"
 )
 

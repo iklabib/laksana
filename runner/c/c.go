@@ -1,9 +1,9 @@
 package c
 
 import (
-	"markisa/container"
-	"markisa/model"
-	"markisa/util"
+	"gitlab.com/iklabib/markisa/container"
+	"gitlab.com/iklabib/markisa/model"
+	"gitlab.com/iklabib/markisa/util"
 	"os"
 	"os/exec"
 	"path/filepath"
