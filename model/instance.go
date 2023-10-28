@@ -11,6 +11,7 @@ type BuildResult struct {
   ExitCode int
   Stdout string
   Stderr string
+  Error error
 }
 
 // run stage model
@@ -19,6 +20,7 @@ type RunResult struct {
   Status string
   Stdout string
   Stderr string
+  Error error
 }
 
 // Run endpoint model

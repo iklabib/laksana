@@ -22,13 +22,16 @@ func Run(archive string) model.RunResponse {
     return runResponse
   }
 
-  runResponse.Run = container.RunContainer(bin, "localhost/markisa:common")
+  runResponse.Run = container.RunContainer(bin, "markisa:common")
   return runResponse
 }
 
 func Build(archive string, dir string) ([]byte, model.BuildResult) {
   srcPath := filepath.Join(dir, "prog.zig")
-  src, _ := os.Create(srcPath)
+  src, err := os.Create(srcPath)
+  if err != nil {
+    return nil, model.BuildResult { Error: err }
+  }
   defer src.Close()
   src.WriteString(archive)
 
@@ -40,15 +43,20 @@ func Build(archive string, dir string) ([]byte, model.BuildResult) {
   cmd.Stderr = &stderr
   cmd.Dir = dir
 
-  err := cmd.Run(); 
+  err = cmd.Run(); 
 
   buildResult := model.BuildResult {
     ExitCode: util.GetExitCode(&err),
     Stdout: stdout.String(),
     Stderr: stderr.String(),
+    Error: err,
   }
 
-  prog, _ := os.ReadFile(filepath.Join(dir, "prog"))
+  if err != nil {
+    return nil, buildResult
+  }
+
+  prog, err := os.ReadFile(filepath.Join(dir, "prog"))
   return prog, buildResult
 }
 

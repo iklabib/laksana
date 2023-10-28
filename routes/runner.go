@@ -38,6 +38,9 @@ func Run(c echo.Context) error {
 
 		fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
 
+    if result.Build.Error != nil || result.Run.Error != nil {
+      return c.JSON(500, result)
+    }
 		return c.JSON(200, result)
 
 	case "c":
@@ -46,6 +49,10 @@ func Run(c echo.Context) error {
 		c.Response().Header().Set("Content-Type", "application/json")
 
 		fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
+
+    if result.Build.Error != nil || result.Run.Error != nil {
+      return c.JSON(500, result)
+    }
 
 		return c.JSON(200, result)
 	}

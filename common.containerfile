@@ -2,10 +2,11 @@ FROM docker.io/library/golang:alpine3.18 as build
 
 ENV GOPATH /
 WORKDIR /build
-COPY instance/main.go  ./
+COPY cmd/instance/main.go  ./
 COPY model/ ./model
 COPY util/ ./util/
-RUN printf "module markisa\ngo 1.21.4\n" > go.mod
+RUN printf "module gitlab.com/iklabib/markisa\ngo 1.21.5\n" > go.mod
+RUN go mod tidy
 RUN go build -o instance
 
 FROM docker.io/library/busybox:stable
