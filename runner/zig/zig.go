@@ -57,6 +57,9 @@ func Build(archive string, dir string) ([]byte, model.BuildResult) {
   }
 
   prog, err := os.ReadFile(filepath.Join(dir, "prog"))
+  if err != nil {
+    return nil, buildResult
+  }
   return prog, buildResult
 }
 
