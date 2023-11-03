@@ -9,32 +9,43 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"gitlab.com/iklabib/markisa/model"
-	"gitlab.com/iklabib/markisa/util"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"time"
+
+	"gitlab.com/iklabib/markisa/model"
+	"gitlab.com/iklabib/markisa/util"
 )
 
 func main() {
+	resp := model.RunResult{}
 	buff, err := io.ReadAll(os.Stdin)
 	if err != nil {
-		panic(err)
+		resp.ExitCode = -1
+		resp.Status = "INTERNAL_ERROR"
+		jsonified, _ := json.Marshal(resp)
+		fmt.Print(string(jsonified))
 	}
 
 	tempDir, err := os.MkdirTemp("", "box_")
 	if err != nil {
-		panic(err)
+		resp.ExitCode = -1
+		resp.Status = "INTERNAL_ERROR"
+		jsonified, _ := json.Marshal(resp)
+		fmt.Print(string(jsonified))
 	}
 
 	prog := filepath.Join(tempDir, "prog")
 	if err := os.WriteFile(prog, buff, 0755); err != nil {
-		panic(err)
+		resp.ExitCode = -1
+		resp.Status = "INTERNAL_ERROR"
+		jsonified, _ := json.Marshal(resp)
+		fmt.Print(string(jsonified))
 	}
-  
-	timeLimit := time.Second*10
+
+	timeLimit := time.Second * 10
 	ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 	defer cancel()
 
@@ -47,30 +58,27 @@ func main() {
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
-  exitCode := 0
-  status := "SUCCESS"
-  if err := cmd.Run(); err != nil {
-    switch ctx.Err() {
-      case context.Canceled:
-          status = "CANCELED"
-      case context.DeadlineExceeded:
-          status = "TIMEOUT"
-      default:
-          status = "ERROR"
-    }
-    exitCode = util.GetExitCode(&err)
-    stderr.WriteString(err.Error())
-  }
-
-  resp := model.RunResult {
-    ExitCode: exitCode,
-		Status: status,
-		Stdout: stdout.String(),
-		Stderr: stderr.String(),
+	exitCode := 0
+	status := "SUCCESS"
+	if err := cmd.Run(); err != nil {
+		switch ctx.Err() {
+		case context.Canceled:
+			status = "CANCELED"
+		case context.DeadlineExceeded:
+			status = "TIMEOUT"
+		default:
+			status = "ERROR"
+		}
+		exitCode = util.GetExitCode(&err)
+		stderr.WriteString(err.Error())
 	}
+
+	resp.ExitCode = exitCode
+	resp.Status = status
+	resp.Stdout = stdout.String()
+	resp.Stderr = stderr.String()
 
 	jsonified, _ := json.Marshal(resp)
 
-  // send result to stdout and catch it outside of container
-  fmt.Print(string(jsonified))
+	fmt.Print(string(jsonified))
 }
