@@ -5,6 +5,7 @@ package main
 // "instance" supposed to be the entry point for container
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
@@ -12,7 +13,6 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"strings"
 	"time"
 
 	"gitlab.com/iklabib/markisa/model"
@@ -27,6 +27,7 @@ func main() {
 		resp.Status = "INTERNAL_ERROR"
 		jsonified, _ := json.Marshal(resp)
 		fmt.Print(string(jsonified))
+		return
 	}
 
 	tempDir, err := os.MkdirTemp("", "box_")
@@ -35,6 +36,7 @@ func main() {
 		resp.Status = "INTERNAL_ERROR"
 		jsonified, _ := json.Marshal(resp)
 		fmt.Print(string(jsonified))
+		return
 	}
 
 	prog := filepath.Join(tempDir, "prog")
@@ -43,15 +45,21 @@ func main() {
 		resp.Status = "INTERNAL_ERROR"
 		jsonified, _ := json.Marshal(resp)
 		fmt.Print(string(jsonified))
+		return
 	}
 
 	timeLimit := time.Second * 10
 	ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 	defer cancel()
 
-	var stdout strings.Builder
-	var stderr strings.Builder
+	var stdout bytes.Buffer
+	var stderr bytes.Buffer
 
+	// FIXME
+	// I want to use from scratch but does not work
+	// the directory didn't created correctly and exec can't find it
+	// busybox does not work either
+	// alpine does, I think I should ditch /tmp and directly using current directory
 	cmd := exec.CommandContext(ctx, "./prog")
 	cmd.Dir = tempDir
 

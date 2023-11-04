@@ -8,7 +8,6 @@ import (
 	"time"
 
 	CRunner "gitlab.com/iklabib/markisa/runner/c"
-	ZigRunner "gitlab.com/iklabib/markisa/runner/zig"
 
 	"github.com/labstack/echo/v4"
 )
@@ -31,28 +30,15 @@ func Run(c echo.Context) error {
 
 	switch reqType {
 	case "zig":
-		start := time.Now()
-
-		result := ZigRunner.Run(src)
-		c.Response().Header().Set("Content-Type", "application/json")
-
-		fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
-
-		if result.Build.ExitCode != 0 || result.Run.ExitCode != 0 {
-			return c.JSON(500, result)
-		}
-		return c.JSON(200, result)
+		return c.JSON(200, "")
 
 	case "c":
 		start := time.Now()
-		result := CRunner.Run(src)
+		build := CRunner.Build(src)
+		result := CRunner.Run(build.EncodedBinary)
 		c.Response().Header().Set("Content-Type", "application/json")
 
 		fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
-
-		if result.Build.ExitCode != 0 || result.Run.ExitCode != 0 {
-			return c.JSON(500, result)
-		}
 
 		return c.JSON(200, result)
 	}

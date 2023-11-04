@@ -25,10 +25,10 @@ func main() {
 	e.Use(session.Middleware(sessions.NewCookieStore(sesskey)))
 	e.Use(middleware.RateLimiter(middleware.NewRateLimiterMemoryStore(5)))
 
-	e.Logger.Fatal(e.Start(URL))
-
 	e.POST("/run", routes.Run)
 
 	e.GET("/share/:id", routes.GetFile)
 	e.POST("/share", routes.ShareFile)
+
+	e.Logger.Fatal(e.Start(URL))
 }

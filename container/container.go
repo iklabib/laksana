@@ -23,7 +23,8 @@ func RunContainer(src []byte, image string) model.RunResult {
 
 	cmd.Run()
 	runResult := model.RunResult{}
-	err := json.Unmarshal(stdout.Bytes(), &runResult)
+	str := stdout.String()
+	err := json.Unmarshal([]byte(str), &runResult)
 	if err != nil {
 		return model.RunResult{
 			ExitCode: -1,

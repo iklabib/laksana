@@ -1,5 +1,10 @@
 package model
 
+const (
+	BUILD_ERROR   = 2
+	RUNTIME_ERROR = 3
+)
+
 type Box struct {
 	Id      string
 	Type    string
@@ -8,10 +13,11 @@ type Box struct {
 
 // buil stage model
 type BuildResult struct {
-	ExitCode int
-	Status   string
-	Stdout   string
-	Stderr   string
+	ExitCode      int
+	Status        string
+	Stdout        string
+	Stderr        string
+	EncodedBinary string
 }
 
 // run stage model

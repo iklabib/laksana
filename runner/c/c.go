@@ -1,9 +1,9 @@
 package c
 
 import (
-	"os"
-	"os/exec"
-	"path/filepath"
+	"encoding/json"
+	"io"
+	"net/http"
 	"strings"
 
 	"gitlab.com/iklabib/markisa/container"
@@ -11,63 +11,39 @@ import (
 	"gitlab.com/iklabib/markisa/util"
 )
 
-func Run(archive string) model.RunResponse {
-	tempDir, err := util.CreateTempDir()
-	if err != nil {
-		return model.RunResponse{
-			Status: "INTERNAL_ERROR",
-		}
-	}
-	bin, buildResult := Build(archive, tempDir)
-
-	runResponse := model.RunResponse{
-		Build: buildResult,
-	}
-
-	if buildResult.ExitCode != 0 {
-		return runResponse
-	}
-
-	runResponse.Run = container.RunContainer(bin, "markisa:common")
-	return runResponse
+func Run(encoded string) model.RunResult {
+	decoded := util.DecodeAscii85([]byte(encoded))
+	return container.RunContainer(decoded, "markisa:common")
 }
 
-func Build(archive string, dir string) ([]byte, model.BuildResult) {
-	srcPath := filepath.Join(dir, "prog.c")
-	src, err := os.Create(srcPath)
+func Build(source string) model.BuildResult {
+	var resp model.BuildResult
+	payload := strings.NewReader(source)
+
+	client := &http.Client{}
+	req, err := http.NewRequest("POST", "http://127.0.0.1:8080", payload)
 	if err != nil {
-		return nil, model.BuildResult{
-			ExitCode: -1,
-			Status:   "INTERNAL_ERROR",
-		}
+		resp.ExitCode = -1
+		resp.Status = "INTERNAL_ERROR"
+		return resp
 	}
-	defer src.Close()
-	src.WriteString(archive)
+	req.Header.Add("Content-Type", "text/plain")
 
-	var stdout strings.Builder
-	var stderr strings.Builder
-
-	cmd := exec.Command("gcc", "prog.c", "-o", "prog")
-	cmd.Stdout = &stdout
-	cmd.Stderr = &stderr
-	cmd.Dir = dir
-
-	err = cmd.Run()
-
-	buildResult := model.BuildResult{
-		ExitCode: util.GetExitCode(&err),
-		Stdout:   stdout.String(),
-		Stderr:   stderr.String(),
-	}
-
+	res, err := client.Do(req)
 	if err != nil {
-		return nil, buildResult
+		resp.ExitCode = -1
+		resp.Status = "INTERNAL_ERROR"
+		return resp
 	}
+	defer res.Body.Close()
 
-	prog, err := os.ReadFile(filepath.Join(dir, "./prog"))
+	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		buildResult.ExitCode = -1
-		buildResult.Status = "INTERNAL_ERROR"
+		resp.ExitCode = -1
+		resp.Status = "INTERNAL_ERROR"
+		return resp
 	}
-	return prog, buildResult
+	json.Unmarshal(body, &resp)
+
+	return resp
 }

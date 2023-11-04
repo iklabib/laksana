@@ -1,8 +1,9 @@
 package util
 
 import (
-  "net"
+	"net"
 )
+
 func GetFreePort() (port int, err error) {
 	var a *net.TCPAddr
 	if a, err = net.ResolveTCPAddr("tcp", "localhost:0"); err == nil {
