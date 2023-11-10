@@ -1,15 +1,15 @@
-FROM docker.io/library/golang:1.21.6-alpine3.19 as build
+FROM docker.io/library/golang:1.22.0-alpine3.19 as build
 
 ENV GOPATH /
 WORKDIR /build
 COPY cmd/instance/main.go  ./
 COPY model/ ./model
 COPY util/ ./util/
-RUN printf "module gitlab.com/iklabib/markisa\ngo 1.21.6\n" > go.mod
+RUN printf "module gitlab.com/iklabib/markisa\ngo 1.22.0\n" > go.mod
 RUN go mod tidy
 RUN go build -o instance
 
-FROM alpine
+FROM alpine:3.19
 WORKDIR /box
 COPY --from=build /build/instance .
 
