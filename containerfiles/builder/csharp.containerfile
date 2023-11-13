@@ -16,7 +16,8 @@ RUN apk add --no-cache clang build-base zlib-dev
 WORKDIR /tmp/csharp/
 RUN dotnet new console -f net8.0 
 COPY assets/csproj.txt csharp.csproj
-RUN dotnet restore
+# TODO: temp workaround
+RUN dotnet publish -v q -o output --no-build
 
 WORKDIR /box
 COPY --from=build /build/instance .
