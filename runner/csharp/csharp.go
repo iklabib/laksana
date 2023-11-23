@@ -13,7 +13,7 @@ import (
 
 func Run(encoded string) model.RunResult {
 	decoded := util.DecodeAscii85([]byte(encoded))
-	return container.RunContainer(decoded, "markisa:csharp-runner")
+	return container.RunContainer(decoded, "markisa:common")
 }
 
 func Build(source string) model.BuildResult {

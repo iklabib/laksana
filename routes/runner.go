@@ -33,7 +33,11 @@ func Run(c echo.Context) error {
 	case "c":
 		start := time.Now()
 		build := CRunner.Build(src)
-		result := CRunner.Run(build.EncodedBinary)
+		if build.ExitCode != 0 {
+			fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
+			return c.JSON(500, build)
+		}
+		result := CRunner.Run(build.Executable)
 		c.Response().Header().Set("Content-Type", "application/json")
 
 		fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
@@ -43,8 +47,13 @@ func Run(c echo.Context) error {
 	case "csharp":
 		start := time.Now()
 		build := Csharp.Build(src)
-		result := Csharp.Run(build.EncodedBinary)
+
 		c.Response().Header().Set("Content-Type", "application/json")
+		if build.ExitCode != 0 {
+			fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
+			return c.JSON(500, build)
+		}
+		result := Csharp.Run(build.Executable)
 
 		fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
 

@@ -11,10 +11,9 @@ import (
 	"os/exec"
 	"path/filepath"
 
+	"github.com/labstack/echo/v4"
 	"gitlab.com/iklabib/markisa/model"
 	"gitlab.com/iklabib/markisa/util"
-
-	"github.com/labstack/echo/v4"
 )
 
 func main() {
@@ -41,7 +40,10 @@ func Build(source []byte) model.BuildResult {
 	srcPath := filepath.Join(dir, "Program.cs")
 	src, err := os.Create(srcPath)
 	if err != nil {
-		return internalError()
+		return model.BuildResult{
+			ExitCode: -1,
+			Status:   "INTERNAL_ERROR",
+		}
 	}
 	src.Write(source)
 	src.Close()
@@ -51,10 +53,9 @@ func Build(source []byte) model.BuildResult {
 
 	cmd := exec.Command("dotnet",
 		"publish",
-		"-r",
-		"linux-musl-x64",
-		"--self-contained=false",
-		"-p:PublishSingleFile=true",
+		"--output",
+		"output",
+		"--nologo",
 	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -74,21 +75,14 @@ func Build(source []byte) model.BuildResult {
 		return buildResult
 	}
 
-	prog, err := os.ReadFile(filepath.Join(dir, "bin/Release/net8.0/linux-musl-x64/publish", "csharp"))
+	prog, err := os.ReadFile(filepath.Join(dir, "output", "csharp"))
 	if err != nil {
-		return internalError()
+		buildResult.Status = "BUILD_ERROR"
+		return buildResult
 	}
 
 	// encode binary as ascii85 before get jsonified
-	// should I use gRPC instead?
-	buildResult.EncodedBinary = util.EncodeAscii85(prog)
+	buildResult.Executable = util.EncodeAscii85(prog)
 
 	return buildResult
-}
-
-func internalError() model.BuildResult {
-	return model.BuildResult{
-		ExitCode: -1,
-		Status:   "INTERNAL_ERROR",
-	}
 }

@@ -13,11 +13,11 @@ type Box struct {
 
 // buil stage model
 type BuildResult struct {
-	ExitCode      int
-	Status        string
-	Stdout        string
-	Stderr        string
-	EncodedBinary string
+	ExitCode   int
+	Status     string
+	Stdout     string
+	Stderr     string
+	Executable string
 }
 
 // run stage model

@@ -6,12 +6,10 @@ package main
 
 import (
 	"bytes"
-	"context"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"time"
 
 	"gitlab.com/iklabib/markisa/model"
 	"gitlab.com/iklabib/markisa/util"
@@ -35,30 +33,11 @@ func main() {
 		return c.JSON(200, build)
 	})
 
-	e.DELETE("/all", func(c echo.Context) error {
-		exec.Command("rm", "-rf", "/tmp/box_*").Run()
-		return c.String(200, "OK")
-	})
-
-	e.GET("/exit", func(c echo.Context) error {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		e.Shutdown(ctx)
-		if err := e.Shutdown(ctx); err != nil {
-			e.Logger.Fatal(err)
-		}
-		return c.String(200, "OK")
-	})
-
 	e.Logger.Fatal(e.Start("0.0.0.0:8080"))
 }
 
 func Build(source string) model.BuildResult {
-	dir, err := util.CreateTempDir()
-	if err != nil {
-		return internalError()
-	}
-
+	dir := "/tmp/c"
 	srcPath := filepath.Join(dir, "prog.c")
 	src, err := os.Create(srcPath)
 	if err != nil {
@@ -95,8 +74,7 @@ func Build(source string) model.BuildResult {
 	}
 
 	// encode binary as ascii85 before get jsonified
-	// should I use gRPC instead?
-	buildResult.EncodedBinary = util.EncodeAscii85(prog)
+	buildResult.Executable = util.EncodeAscii85(prog)
 
 	return buildResult
 }
