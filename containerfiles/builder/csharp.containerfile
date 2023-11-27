@@ -17,7 +17,7 @@ WORKDIR /tmp/csharp/
 RUN dotnet new console -f net8.0 
 COPY assets/csproj.txt csharp.csproj
 # TODO: temp workaround
-RUN dotnet publish -v q -o output --no-build
+RUN dotnet publish -v q -o output
 
 WORKDIR /box
 COPY --from=build /build/instance .

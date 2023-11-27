@@ -1,5 +1,6 @@
 FROM docker.io/library/golang:1.22.0-alpine3.19 as build
 
+ENV MARKISA_RUN_TIME=2500
 ENV GOPATH /
 WORKDIR /build
 COPY cmd/instance/main.go  ./
