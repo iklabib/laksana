@@ -2,34 +2,21 @@ package util
 
 import (
 	"bytes"
-	"compress/gzip"
 	"encoding/ascii85"
 	"io"
+
+	"github.com/klauspost/compress/zstd"
 )
 
-func Compress(s []byte) ([]byte, error) {
-	buff := bytes.Buffer{}
-	compressed := gzip.NewWriter(&buff)
-	if _, err := compressed.Write(s); err != nil {
-		return nil, err
-	}
+var encoder, _ = zstd.NewWriter(nil)
+var decoder, _ = zstd.NewReader(nil)
 
-	compressed.Close()
-	return buff.Bytes(), nil
+func Compress(src []byte) []byte {
+	return encoder.EncodeAll(src, make([]byte, 0, len(src)))
 }
 
-func Decompress(s []byte) ([]byte, error) {
-	r, err := gzip.NewReader(bytes.NewReader(s))
-	if err != nil {
-		return nil, err
-	}
-
-	buff, err := io.ReadAll(r)
-	if err != nil {
-		return nil, err
-	}
-	r.Close()
-	return buff, nil
+func Decompress(src []byte) ([]byte, error) {
+	return decoder.DecodeAll(src, nil)
 }
 
 func EncodeAscii85(data []byte) string {
