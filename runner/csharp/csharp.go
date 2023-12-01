@@ -3,17 +3,16 @@ package csharp
 import (
 	"encoding/json"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 
 	"gitlab.com/iklabib/markisa/container"
 	"gitlab.com/iklabib/markisa/model"
-	"gitlab.com/iklabib/markisa/util"
 )
 
-func Run(encoded string) model.RunResult {
-	decoded := util.DecodeAscii85([]byte(encoded))
-	return container.RunContainer(decoded, "markisa:common")
+func Run(bin []byte) model.RunResult {
+	return container.RunContainer(bin, "markisa:common")
 }
 
 func Build(source string) model.BuildResult {
@@ -43,7 +42,13 @@ func Build(source string) model.BuildResult {
 		resp.Status = "INTERNAL_ERROR"
 		return resp
 	}
-	json.Unmarshal(body, &resp)
+
+	if err := json.Unmarshal(body, &resp); err != nil {
+		log.Println(err.Error())
+		resp.ExitCode = -1
+		resp.Status = "SERIALIZATION_ERROR"
+		return resp
+	}
 
 	return resp
 }

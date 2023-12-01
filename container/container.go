@@ -12,6 +12,8 @@ func RunContainer(src []byte, image string) model.RunResult {
 	cmd := exec.Command(
 		"podman",
 		"run",
+		"-e",
+		"MARKISA_RUN_TIME=3000",
 		"-i",
 		"--rm",
 		image,

@@ -1,7 +1,7 @@
 package main
 
 // "instance" received a compiled program and run it.
-// The program must be complete within 10 seconds, else be killed.
+// The program must be complete within n seconds, else be killed.
 // "instance" supposed to be the entry point for container
 
 import (
@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"time"
 
 	"gitlab.com/iklabib/markisa/model"
@@ -48,7 +49,12 @@ func main() {
 		return
 	}
 
-	timeLimit := time.Second * 10
+	ms, err := strconv.Atoi(os.Getenv("MARKISA_RUN_TIME"))
+	if err != nil {
+		ms = 2500
+	}
+
+	timeLimit := time.Millisecond * time.Duration(ms)
 	ctx, cancel := context.WithTimeout(context.Background(), timeLimit)
 	defer cancel()
 
@@ -86,7 +92,11 @@ func main() {
 	resp.Stdout = stdout.String()
 	resp.Stderr = stderr.String()
 
-	jsonified, _ := json.Marshal(resp)
+	jsonified, err := json.Marshal(resp)
+	if err != nil {
+		resp.ExitCode = -1
+		resp.Status = "SERIALIZING_ERROR"
+	}
 
 	fmt.Print(string(jsonified))
 }

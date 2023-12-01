@@ -17,7 +17,7 @@ type BuildResult struct {
 	Status     string
 	Stdout     string
 	Stderr     string
-	Executable string
+	Executable []byte
 }
 
 // run stage model

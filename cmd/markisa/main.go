@@ -12,9 +12,7 @@ import (
 )
 
 func main() {
-	PORT := os.Getenv("PORT")
 	BASE_URL := os.Getenv("BASE_URL")
-	URL := BASE_URL + ":" + PORT
 
 	e := echo.New()
 
@@ -27,8 +25,5 @@ func main() {
 
 	e.POST("/run", routes.Run)
 
-	e.GET("/share/:id", routes.GetFile)
-	e.POST("/share", routes.ShareFile)
-
-	e.Logger.Fatal(e.Start(URL))
+	e.Logger.Fatal(e.Start(BASE_URL))
 }

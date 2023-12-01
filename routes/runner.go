@@ -56,7 +56,6 @@ func Run(c echo.Context) error {
 		result := Csharp.Run(build.Executable)
 
 		fmt.Printf("Request running time: %.4f\n", time.Since(start).Seconds())
-
 		return c.JSON(200, result)
 	}
 

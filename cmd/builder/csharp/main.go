@@ -12,12 +12,14 @@ import (
 	"path/filepath"
 
 	"github.com/labstack/echo/v4"
+	"github.com/labstack/echo/v4/middleware"
 	"gitlab.com/iklabib/markisa/model"
 	"gitlab.com/iklabib/markisa/util"
 )
 
 func main() {
 	e := echo.New()
+	e.Use(middleware.Gzip())
 	e.POST("/", func(c echo.Context) error {
 		if c.Request().Body == nil {
 			return c.JSON(400, "No file provided")
@@ -51,11 +53,17 @@ func Build(source []byte) model.BuildResult {
 	var stdout bytes.Buffer
 	var stderr bytes.Buffer
 
-	cmd := exec.Command("dotnet",
+	cmd := exec.Command(
+		"dotnet",
 		"publish",
+		"csharp.csproj",
+		"-p:RunAnalyzers=false",
+		"--no-restore",
+		"--nologo",
 		"--output",
 		"output",
-		"--nologo",
+		"-v",
+		"q",
 	)
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
@@ -77,12 +85,13 @@ func Build(source []byte) model.BuildResult {
 
 	prog, err := os.ReadFile(filepath.Join(dir, "output", "csharp"))
 	if err != nil {
+		buildResult.ExitCode = util.GetExitCode(&err)
 		buildResult.Status = "BUILD_ERROR"
 		return buildResult
 	}
 
 	// encode binary as ascii85 before get jsonified
-	buildResult.Executable = util.EncodeAscii85(prog)
+	buildResult.Executable = prog
 
 	return buildResult
 }

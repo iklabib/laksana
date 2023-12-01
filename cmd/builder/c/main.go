@@ -74,7 +74,7 @@ func Build(source string) model.BuildResult {
 	}
 
 	// encode binary as ascii85 before get jsonified
-	buildResult.Executable = util.EncodeAscii85(prog)
+	buildResult.Executable = prog
 
 	return buildResult
 }
