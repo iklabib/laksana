@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	CRunner "gitlab.com/iklabib/markisa/runner/c"
-	Csharp "gitlab.com/iklabib/markisa/runner/csharp"
+	CRunner "github.com/iklabib/markisa/runner/c"
+	Csharp "github.com/iklabib/markisa/runner/csharp"
 
 	"github.com/labstack/echo/v4"
 )

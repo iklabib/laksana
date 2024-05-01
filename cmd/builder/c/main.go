@@ -11,8 +11,8 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"gitlab.com/iklabib/markisa/model"
-	"gitlab.com/iklabib/markisa/util"
+	"github.com/iklabib/markisa/model"
+	"github.com/iklabib/markisa/util"
 
 	"github.com/labstack/echo/v4"
 )

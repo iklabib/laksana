@@ -16,8 +16,8 @@ import (
 	"strconv"
 	"time"
 
-	"gitlab.com/iklabib/markisa/model"
-	"gitlab.com/iklabib/markisa/util"
+	"github.com/iklabib/markisa/model"
+	"github.com/iklabib/markisa/util"
 )
 
 func main() {

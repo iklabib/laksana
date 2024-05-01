@@ -5,7 +5,7 @@ WORKDIR /build
 COPY cmd/builder/csharp/main.go  ./
 COPY model/ ./model
 COPY util/ ./util/
-RUN printf "module gitlab.com/iklabib/markisa\ngo 1.22.0\n" > go.mod
+RUN printf "module github.com/iklabib/markisa\ngo 1.22.0\n" > go.mod
 RUN go mod tidy
 RUN go build -o instance
 

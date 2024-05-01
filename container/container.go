@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"os/exec"
 
-	"gitlab.com/iklabib/markisa/model"
+	"github.com/iklabib/markisa/model"
 )
 
 func RunContainer(src []byte, image string) model.RunResult {

@@ -6,8 +6,8 @@ import (
 	"net/http"
 	"strings"
 
-	"gitlab.com/iklabib/markisa/container"
-	"gitlab.com/iklabib/markisa/model"
+	"github.com/iklabib/markisa/container"
+	"github.com/iklabib/markisa/model"
 )
 
 func Run(bin []byte) model.RunResult {

@@ -13,8 +13,8 @@ import (
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
-	"gitlab.com/iklabib/markisa/model"
-	"gitlab.com/iklabib/markisa/util"
+	"github.com/iklabib/markisa/model"
+	"github.com/iklabib/markisa/util"
 )
 
 func main() {

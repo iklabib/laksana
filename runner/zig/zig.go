@@ -6,9 +6,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"gitlab.com/iklabib/markisa/container"
-	"gitlab.com/iklabib/markisa/model"
-	"gitlab.com/iklabib/markisa/util"
+	"github.com/iklabib/markisa/container"
+	"github.com/iklabib/markisa/model"
+	"github.com/iklabib/markisa/util"
 )
 
 func Run(archive string) model.RunResponse {
