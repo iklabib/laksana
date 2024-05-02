@@ -36,14 +36,24 @@ func main() {
 	e.Logger.Fatal(e.Start("0.0.0.0:8080"))
 }
 
-func Build(source string) model.BuildResult {
-	dir := "/tmp/c"
+func Build(source string) model.BuilderResponse {
+	dir, err := os.MkdirTemp("/tmp", "box_")
+	if err != nil {
+		return internalError("Failed to create temp dir")
+	}
+
 	srcPath := filepath.Join(dir, "prog.c")
 	src, err := os.Create(srcPath)
 	if err != nil {
-		return internalError()
+		cleanup(dir)
+		return internalError("Failed to create source file")
 	}
-	src.WriteString(source)
+
+	if src.WriteString(source); err != nil {
+		cleanup(dir)
+		return internalError("Failed to write to source file")
+	}
+
 	src.Close()
 
 	var stdout bytes.Buffer
@@ -64,24 +74,39 @@ func Build(source string) model.BuildResult {
 	}
 
 	if err != nil || buildResult.ExitCode != 0 {
+		cleanup(dir)
+
 		buildResult.Status = "BUILD_ERROR"
-		return buildResult
+		return model.BuilderResponse{
+			Err:         "",
+			BuildResult: buildResult,
+		}
 	}
 
 	prog, err := os.ReadFile(filepath.Join(dir, "prog"))
 	if err != nil {
-		return internalError()
+		cleanup(dir)
+		return internalError("Failed to read executable")
 	}
 
-	// encode binary as ascii85 before get jsonified
 	buildResult.Executable = prog
 
-	return buildResult
+	return model.BuilderResponse{
+		Err:         "",
+		BuildResult: buildResult,
+	}
 }
 
-func internalError() model.BuildResult {
-	return model.BuildResult{
-		ExitCode: -1,
-		Status:   "INTERNAL_ERROR",
+func cleanup(dir string) {
+	os.RemoveAll(dir)
+}
+
+func internalError(err string) model.BuilderResponse {
+	return model.BuilderResponse{
+		Err: err,
+		BuildResult: model.BuildResult{
+			ExitCode: -1,
+			Status:   "INTERNAL_ERROR",
+		},
 	}
 }
