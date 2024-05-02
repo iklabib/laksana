@@ -20,6 +20,11 @@ type BuildResult struct {
 	Executable []byte
 }
 
+type BuilderResponse struct {
+	Err string // internal error reason
+	BuildResult
+}
+
 // run stage model
 type RunResult struct {
 	ExitCode int
