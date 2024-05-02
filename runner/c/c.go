@@ -15,33 +15,36 @@ func Run(bin []byte) model.RunResult {
 }
 
 func Build(source string) model.BuildResult {
-	var resp model.BuildResult
 	payload := strings.NewReader(source)
 
 	client := &http.Client{}
 	req, err := http.NewRequest("POST", "http://127.0.0.1:8080", payload)
 	if err != nil {
-		resp.ExitCode = -1
-		resp.Status = "INTERNAL_ERROR"
-		return resp
+		return internalError()
 	}
 	req.Header.Add("Content-Type", "text/plain")
 
 	res, err := client.Do(req)
 	if err != nil {
-		resp.ExitCode = -1
-		resp.Status = "INTERNAL_ERROR"
-		return resp
+		return internalError()
 	}
 	defer res.Body.Close()
 
 	body, err := io.ReadAll(res.Body)
 	if err != nil {
-		resp.ExitCode = -1
-		resp.Status = "INTERNAL_ERROR"
-		return resp
+		return internalError()
 	}
-	json.Unmarshal(body, &resp)
 
-	return resp
+	// TODO: error logging
+	var builderResp model.BuilderResponse
+	json.Unmarshal(body, &builderResp)
+
+	return builderResp.BuildResult
+}
+
+func internalError() model.BuildResult {
+	return model.BuildResult{
+		ExitCode: -1,
+		Status:   "INTERNAL_ERROR",
+	}
 }
