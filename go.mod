@@ -4,7 +4,6 @@ go 1.22.0
 
 require (
 	github.com/gorilla/sessions v1.2.2
-	github.com/klauspost/compress v1.17.8
 	github.com/labstack/echo-contrib v0.17.1
 	github.com/labstack/echo/v4 v4.12.0
 )

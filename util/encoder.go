@@ -4,20 +4,8 @@ import (
 	"bytes"
 	"encoding/ascii85"
 	"io"
-
-	"github.com/klauspost/compress/zstd"
 )
 
-var encoder, _ = zstd.NewWriter(nil)
-var decoder, _ = zstd.NewReader(nil)
-
-func Compress(src []byte) []byte {
-	return encoder.EncodeAll(src, make([]byte, 0, len(src)))
-}
-
-func Decompress(src []byte) ([]byte, error) {
-	return decoder.DecodeAll(src, nil)
-}
 
 func EncodeAscii85(data []byte) string {
 	var buff bytes.Buffer
