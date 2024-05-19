@@ -1,4 +1,4 @@
-module codeberg.com/iklabib/markisa
+module codeberg.org/iklabib/markisa
 
 go 1.22.0
 
