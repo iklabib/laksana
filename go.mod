@@ -1,15 +1,16 @@
 module codeberg.org/iklabib/markisa
 
-go 1.22.0
+go 1.22.3
+
+require github.com/labstack/echo/v4 v4.12.0
 
 require (
-	github.com/gorilla/sessions v1.2.2
-	github.com/labstack/echo-contrib v0.17.1
-	github.com/labstack/echo/v4 v4.12.0
+	github.com/gorilla/sessions v1.2.2 // indirect
+	github.com/labstack/echo-contrib v0.17.1 // indirect
 )
 
 require (
-	github.com/dchest/uniuri v1.2.0
+	github.com/dchest/uniuri v1.2.0 // indirect
 	github.com/golang-jwt/jwt v3.2.2+incompatible // indirect
 	github.com/gorilla/context v1.1.2 // indirect
 	github.com/gorilla/securecookie v1.1.2 // indirect
