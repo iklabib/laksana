@@ -1,10 +1,5 @@
 package model
 
-const (
-	BUILD_ERROR   = 2
-	RUNTIME_ERROR = 3
-)
-
 type Box struct {
 	Id      string
 	Type    string
@@ -38,4 +33,17 @@ type RunResponse struct {
 	Build  BuildResult
 	Run    RunResult
 	Status string
+}
+
+type SubmissionRequest struct {
+	ExerciseId string `json:"exercise_id" validate:"required"`
+	User string `json:"user" validate:"required"`
+	Type string `json:"type" validate:"required"`
+	Src  string `json:"src" validate:"required"`
+}
+
+type Submission struct {
+	Type string `json:"type"`
+	Src  string `json:"src"`
+	SrcTest string `json:"src_test"`
 }
