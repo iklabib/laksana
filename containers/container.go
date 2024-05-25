@@ -63,7 +63,7 @@ func (c ContainerClient) ExecTenant(id string, req []byte) ([]byte, error) {
 
 func (c ContainerClient) CleanContainers() error {
 	var stdoutBuff bytes.Buffer
-	cmd := exec.Command(c.Engine, "ps", "-a", "-f", "ancestor=quay.io/iklabib/markisa:tenant", "--format", "'{{.ID}}'")
+	cmd := exec.Command(c.Engine, "ps", "-a", "-f", "ancestor="+TENANT_IMAGE, "--format", "'{{.ID}}'")
 	cmd.Stdout = &stdoutBuff
 	err := cmd.Run()
 	if err != nil {
