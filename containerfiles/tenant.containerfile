@@ -1,4 +1,4 @@
-FROM docker.io/library/golang:alpine3.19 as build
+FROM docker.io/library/golang:alpine3.20 as build
 ENV GOPATH /go
 WORKDIR /build
 COPY cmd/commander/main.go .
@@ -6,7 +6,7 @@ COPY . .
 RUN go mod tidy
 RUN go build -o commander
 
-FROM docker.io/library/alpine:3.19
+FROM docker.io/library/alpine:3.20
 
 RUN apk add --no-cache musl musl-dev clang bubblewrap git python3 py3-pip py3-pytest
 RUN apk add --no-cache neovim bash 

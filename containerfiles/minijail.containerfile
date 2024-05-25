@@ -1,4 +1,4 @@
-FROM docker.io/library/alpine:3.19 as build
+FROM docker.io/library/alpine:3.20 as build
 RUN apk add --no-cache gcc bash libcap-dev alpine-sdk
 RUN git clone --depth 1 https://chromium.googlesource.com/chromiumos/platform/minijail && cd minijail && make
 WORKDIR /minijail
