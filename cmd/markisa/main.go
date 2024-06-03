@@ -20,7 +20,7 @@ func main() {
 	e.Use(middleware.Gzip())
 	e.Use(middleware.CORS())
 
-	client := containers.NewDefault()
+	client := containers.NewContainerClient()
 	record := db.NewRecord()
 
 	record.CleanRecord()
@@ -35,8 +35,8 @@ func main() {
 		}
 
 		clientId := req.User
-		
-		containerId := record.Retrieve(clientId); 
+
+		containerId := record.Retrieve(clientId)
 		if containerId == "" {
 			containerId, err := client.SpawnTenant()
 			if err != nil {
@@ -47,8 +47,8 @@ func main() {
 		}
 
 		submmission := model.Submission{
-			Type: req.Type,
-			Src: req.Src,
+			Type:    req.Type,
+			Src:     req.Src,
 			SrcTest: exercise.RetrieveTestCase(req.ExerciseId),
 		}
 

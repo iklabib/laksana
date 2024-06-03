@@ -30,10 +30,24 @@ func main() {
 		return
 	}
 
-	switch (req.Type) {
+	var workdir string
+
+	// cleanup on exit
+	defer func() {
+		if err := os.RemoveAll(workdir); err != nil {
+			resp.ExitCode = -1
+			resp.Status = "EXIT CLEANUP FAILED"
+			jsonified, _ := json.Marshal(resp)
+			fmt.Print(string(jsonified))
+		}
+	}()
+
+	switch req.Type {
 	case "python":
 		python := toolchains.NewPython()
 		dir, err := python.Prep(req.Src, req.SrcTest)
+
+		workdir = dir
 		if err != nil {
 			resp.ExitCode = -1
 			resp.Status = err.Error()
