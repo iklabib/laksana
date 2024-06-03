@@ -33,14 +33,10 @@ func ContainerEngine() string {
 	panic(errors.New("no container engine found in path"))
 }
 
-func NewDefault() *ContainerClient {
+func NewContainerClient() *ContainerClient {
 	return &ContainerClient{
 		Engine: ContainerEngine(),
 	}
-}
-
-func NewClient() *ContainerClient {
-	return &ContainerClient{}
 }
 
 func (c ContainerClient) SpawnTenant() (string, error) {
@@ -60,7 +56,6 @@ func (c ContainerClient) ExecTenant(id string, req []byte) ([]byte, error) {
 	return stdoutBuff.Bytes(), err
 }
 
-
 func (c ContainerClient) CleanContainers() error {
 	var stdoutBuff bytes.Buffer
 	cmd := exec.Command(c.Engine, "ps", "-a", "-f", "ancestor="+TENANT_IMAGE, "--format", "'{{.ID}}'")
@@ -71,7 +66,7 @@ func (c ContainerClient) CleanContainers() error {
 	}
 
 	ids := strings.Split(stdoutBuff.String(), "\n")
-	for _, id :=range ids {
+	for _, id := range ids {
 		err := exec.Command(c.Engine, "rm", "-f", id).Run()
 		if err != nil {
 			return err
