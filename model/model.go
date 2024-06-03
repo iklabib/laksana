@@ -37,13 +37,19 @@ type RunResponse struct {
 
 type SubmissionRequest struct {
 	ExerciseId string `json:"exercise_id" validate:"required"`
-	User string `json:"user" validate:"required"`
-	Type string `json:"type" validate:"required"`
-	Src  string `json:"src" validate:"required"`
+	User       string `json:"user" validate:"required"`
+	Type       string `json:"type" validate:"required"`
+	Src        string `json:"src" validate:"required"`
 }
 
 type Submission struct {
-	Type string `json:"type"`
-	Src  string `json:"src"`
+	Type    string `json:"type"`
+	Src     string `json:"src"`
 	SrcTest string `json:"src_test"`
+}
+
+type SandboxExecResult struct {
+	Error  error
+	Stdout string
+	Stderr string
 }
