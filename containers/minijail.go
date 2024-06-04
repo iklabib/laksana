@@ -2,7 +2,9 @@ package containers
 
 import (
 	"bytes"
+	"os"
 	"os/exec"
+	"path"
 
 	"codeberg.org/iklabib/markisa/model"
 )
@@ -13,14 +15,19 @@ type Minijail struct {
 }
 
 func NewMinijail() Minijail {
-	path, err := exec.LookPath("minijail0")
+	minijail, err := exec.LookPath("minijail0")
+	if err != nil {
+		panic(err)
+	}
+
+	executable, err := os.Executable()
 	if err != nil {
 		panic(err)
 	}
 
 	return Minijail{
-		Path:       path,
-		ConfigPath: "./configs/minijail.cfg",
+		Path:       minijail,
+		ConfigPath: path.Join(path.Dir(executable), "configs/minijail.cfg"),
 	}
 }
 
@@ -31,7 +38,16 @@ func (mn Minijail) argsBuilder(dir string, commands []string) []string {
 	return append(args, commands...)
 }
 
+func (mn Minijail) PreExec(dir string) {
+	// minijail0 -t does not automatically create /tmp
+	if err := os.Mkdir(path.Join(dir, "tmp"), 0765); err != nil {
+		panic(err)
+	}
+}
+
 func (mn Minijail) ExecConfined(dir string, commands []string) model.SandboxExecResult {
+	mn.PreExec(dir)
+
 	args := mn.argsBuilder(dir, commands)
 
 	var stdoutBuff bytes.Buffer
@@ -40,7 +56,6 @@ func (mn Minijail) ExecConfined(dir string, commands []string) model.SandboxExec
 	cmd := exec.Command(mn.Path, args...)
 	cmd.Stdout = &stdoutBuff
 	cmd.Stderr = &stderrBuff
-	cmd.Dir = dir
 	err := cmd.Run()
 
 	return model.SandboxExecResult{
