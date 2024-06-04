@@ -3,6 +3,7 @@ package toolchains
 import (
 	"errors"
 	"os"
+	"os/exec"
 	"path/filepath"
 
 	"codeberg.org/iklabib/markisa/containers"
@@ -21,6 +22,10 @@ func (p Python) Prep(src string, srcTest string) (string, error) {
 	tempDir, err := os.MkdirTemp(".", "box")
 	if err != nil {
 		return tempDir, errors.New("failed to create temp dir")
+	}
+
+	if err := os.Chmod(tempDir, 0775); err != nil {
+		return tempDir, errors.New("failed to set permission for temp dir")
 	}
 
 	submmission := filepath.Join(tempDir, "main.py")
@@ -43,7 +48,15 @@ func (p Python) Prep(src string, srcTest string) (string, error) {
 }
 
 func (p Python) Eval(dir string) model.RunResult {
-	commands := []string{"$(which python3)", "test.py"}
+	executable, err := exec.LookPath("python3")
+	if err != nil {
+		return model.RunResult{
+			ExitCode: -1,
+			Status:   "FAILED",
+			Stderr:   err.Error(),
+		}
+	}
+	commands := []string{executable, "test.py"}
 	minijail := containers.NewMinijail()
 	execResult := minijail.ExecConfined(dir, commands)
 	exitCode := util.GetExitCode(&execResult.Error)
