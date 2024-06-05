@@ -16,7 +16,7 @@ endif
 build: clean
 	# mkdir "build"
 	# go build -o build cmd/markisa/main.go
-	$(CONTAINER_ENGINE) build . -t "quay.io/iklabib/markisa:tenant" -f "containerfiles/tenant.containerfile"
+	$(CONTAINER_ENGINE) build . -t "quay.io/iklabib/markisa" -f "containerfiles/containerfile"
 
 .PHONY: clean
 clean:

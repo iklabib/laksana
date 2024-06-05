@@ -1,15 +1,19 @@
 FROM docker.io/library/golang:alpine3.20 as build
-ENV GOPATH /go
-WORKDIR /build
-COPY cmd/commander/main.go .
-COPY . .
-RUN go mod tidy
-RUN go build -o commander
 
-RUN apk add --no-cache gcc bash libcap-dev alpine-sdk
-RUN git clone --depth 1 --branch linux-v2024.05.22 https://chromium.googlesource.com/chromiumos/platform/minijail && cd minijail && make 
+ENV GOPATH /go
+RUN apk add --no-cache clang make libcap-dev
+
+WORKDIR /build
+COPY cmd/markisa/main.go .
+COPY . .
+RUN go mod tidy && go build -o markisa
+
+ADD https://chromium.googlesource.com/chromiumos/platform/minijail/+archive/99e8fd4bf9aaf62eab9b3cabddc2939cb3427029.tar.gz minijail.tar.gz
+RUN mkdir minijail && tar -xzf minijail.tar.gz -C minijail && cd minijail && make 
 
 FROM docker.io/library/alpine:3.20
+
+RUN apk add --no-cache musl musl-dev clang bubblewrap git python3 py3-pip py3-pytest libcap neovim bash 
 
 COPY --from=build /build/minijail/minijail0 /usr/bin/minijail0
 COPY --from=build /build/minijail/libminijail.so /usr/lib/libminijail.so
@@ -25,14 +29,18 @@ RUN chmod 755 /usr/bin/minijail0 \
     && chmod 644 /usr/share/man/man1/minijail0.1 \
     && chmod 644 /usr/share/man/man5/minijail0.5
 
-RUN apk add --no-cache musl musl-dev clang bubblewrap git python3 py3-pip py3-pytest libcap neovim bash 
-RUN wget -qO- https://go.dev/dl/go1.22.3.linux-amd64.tar.gz | tar -xz -C /usr/local && ln -s /usr/local/go/bin/go /bin/go 
+ADD https://go.dev/dl/go1.22.3.linux-amd64.tar.gz go1.22.3.linux-amd64.tar.gz 
+RUN tar -xzf go1.22.3.linux-amd64.tar.gz -C /usr/local && ln -s /usr/local/go/bin/go /bin/go 
 
 ENV USER user
 ENV HOME /home/user
-RUN adduser -D --home $HOME $USER && mkdir -p ${HOME}/.local/bin
-COPY --from=build /build/commander ${HOME}/.local/bin 
-COPY configs/minijail.cfg ${HOME}/.local/bin/configs/minijail.cfg 
+RUN adduser -D --home $HOME $USER 
 RUN chown -R user:user ${HOME}
 
-ENTRYPOINT [ "bash" ]
+ENV BASE_URL "0.0.0.0:8000"
+WORKDIR /app
+COPY --from=build /build/markisa .
+COPY --from=build /build/exercises exercises
+COPY configs/minijail.cfg configs/minijail.cfg
+
+ENTRYPOINT [ "/app/markisa" ]
