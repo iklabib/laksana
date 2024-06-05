@@ -53,7 +53,7 @@ func (p Python) Eval(dir string) model.RunResult {
 	executable, err := exec.LookPath("python3")
 	if err != nil {
 		return model.RunResult{
-			ExitCode: -1,
+			ExitCode: -2,
 			Status:   "FAILED",
 			Stderr:   err.Error(),
 		}
@@ -67,6 +67,15 @@ func (p Python) Eval(dir string) model.RunResult {
 	status := "SUCCESS"
 	if exitCode != 0 {
 		status = "FAILED"
+	}
+
+	// TODO: add fallback mechanism
+	if err := os.RemoveAll(dir); err != nil {
+		return model.RunResult{
+			ExitCode: -1,
+			Status:   "Exit clean failed",
+			Stderr:   err.Error(),
+		}
 	}
 
 	return model.RunResult{
