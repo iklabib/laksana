@@ -1,13 +1,12 @@
 package main
 
 import (
-	"encoding/json"
 	"net/http"
 	"os"
 
-	"codeberg.org/iklabib/markisa/containers"
-	"codeberg.org/iklabib/markisa/db"
 	"codeberg.org/iklabib/markisa/model"
+	"codeberg.org/iklabib/markisa/storage"
+	"codeberg.org/iklabib/markisa/toolchains"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -20,13 +19,7 @@ func main() {
 	e.Use(middleware.Gzip())
 	e.Use(middleware.CORS())
 
-	client := containers.NewContainerClient()
-	record := db.NewRecord()
-
-	record.CleanRecord()
-	client.CleanContainers()
-
-	exercise := db.NewExerciseDefault()
+	exercise := storage.NewExerciseDefault()
 
 	e.POST("/run", func(c echo.Context) error {
 		var req model.SubmissionRequest
@@ -34,39 +27,30 @@ func main() {
 			return c.String(http.StatusBadRequest, "Bad Request")
 		}
 
-		clientId := req.User
+		if err := c.Validate(req); err != nil {
+			return err
+		}
 
-		containerId := record.Retrieve(clientId)
-		if containerId == "" {
-			containerId, err := client.SpawnTenant()
-			if err != nil {
-				return c.String(http.StatusInternalServerError, "Internal Error")
-			}
-
-			record.Insert(clientId, containerId)
+		testCase, err := exercise.RetrieveTestCase(req.ExerciseId)
+		if err != nil {
+			return c.String(http.StatusBadRequest, "Bad Request: "+err.Error())
 		}
 
 		submmission := model.Submission{
 			Type:    req.Type,
 			Src:     req.Src,
-			SrcTest: exercise.RetrieveTestCase(req.ExerciseId),
+			SrcTest: testCase,
 		}
 
-		marshaled, err := json.Marshal(submmission)
-		if err != nil {
+		evaluationResult := toolchains.EvaluateSubmission(submmission)
+
+		// 0 success
+		// -1 is internal error
+		// -2 is evaluation error
+		if evaluationResult.ExitCode == -1 {
 			return c.String(http.StatusInternalServerError, "Internal Error")
 		}
-
-		output, err := client.ExecTenant(containerId[:12], marshaled)
-		if err != nil {
-			return c.String(http.StatusInternalServerError, err.Error())
-		}
-
-		unmarshal := model.RunResult{}
-		if err := json.Unmarshal(output, &unmarshal); err != nil {
-			return c.String(http.StatusInternalServerError, "Internal Error")
-		}
-		return c.JSON(http.StatusOK, unmarshal)
+		return c.JSON(http.StatusOK, evaluationResult)
 	})
 
 	e.Logger.Fatal(e.Start(BASE_URL))
