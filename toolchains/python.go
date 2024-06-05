@@ -34,6 +34,7 @@ func (p Python) Prep(src string, srcTest string) (string, error) {
 	} else {
 		file.WriteString(src)
 		file.Close()
+		os.Chmod(submmission, 0444)
 	}
 
 	testCases := filepath.Join(tempDir, "test.py")
@@ -42,6 +43,7 @@ func (p Python) Prep(src string, srcTest string) (string, error) {
 	} else {
 		file.WriteString(srcTest)
 		file.Close()
+		os.Chmod(submmission, 0444)
 	}
 
 	return tempDir, nil
