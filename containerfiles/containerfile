@@ -9,28 +9,29 @@ COPY . .
 RUN go mod tidy && go build -o markisa
 
 ADD https://chromium.googlesource.com/chromiumos/platform/minijail/+archive/99e8fd4bf9aaf62eab9b3cabddc2939cb3427029.tar.gz minijail.tar.gz
-RUN mkdir minijail && tar -xzf minijail.tar.gz -C minijail && cd minijail && make 
+RUN mkdir minijail && tar -xzf minijail.tar.gz -C minijail && rm minijail.tar.gz && cd minijail && make
 
 FROM docker.io/library/alpine:3.20
 
 RUN apk add --no-cache musl musl-dev clang bubblewrap git python3 py3-pip py3-pytest libcap neovim bash 
 
-COPY --from=build /build/minijail/minijail0 /usr/bin/minijail0
-COPY --from=build /build/minijail/libminijail.so /usr/lib/libminijail.so
-COPY --from=build /build/minijail/libminijailpreload.so /lib/libminijailpreload.so
-COPY --from=build /build/minijail/libminijail.h /usr/include/libminijail.h
-COPY --from=build /build/minijail/minijail0.1 /usr/share/man/man1/minijail0.1
-COPY --from=build /build/minijail/minijail0.5 /usr/share/man/man5/minijail0.5
+COPY --from=build ["/build/minijail/minijail0", \
+                   "/build/minijail/libminijail.so", \
+                   "/build/minijail/libminijailpreload.so", \
+                   "/build/minijail/libminijail.h", \
+                   "/build/minijail/minijail0.1", \
+                   "/build/minijail/minijail0.5", \
+                   "./"]
 
-RUN chmod 755 /usr/bin/minijail0 \
-    && chmod 755 /usr/lib/libminijail.so \
-    && chmod 755 /lib/libminijailpreload.so \
-    && chmod 644 /usr/include/libminijail.h \
-    && chmod 644 /usr/share/man/man1/minijail0.1 \
-    && chmod 644 /usr/share/man/man5/minijail0.5
+RUN install -m755 -D minijail0 /usr/bin/minijail0 && \
+    install -m755 -D libminijail.so /usr/lib/libminijail.so && \
+    install -m755 -D libminijailpreload.so /lib/libminijailpreload.so && \
+    install -m644 -D libminijail.h /usr/include/libminijail.h && \
+    install -m644 -D minijail0.1 /usr/share/man/man1/minijail0.1 && \
+    install -m644 -D minijail0.5 /usr/share/man/man5/minijail0.5
 
 ADD https://go.dev/dl/go1.22.3.linux-amd64.tar.gz go1.22.3.linux-amd64.tar.gz 
-RUN tar -xzf go1.22.3.linux-amd64.tar.gz -C /usr/local && ln -s /usr/local/go/bin/go /bin/go 
+RUN tar -xzf go1.22.3.linux-amd64.tar.gz -C /usr/local && rm go1.22.3.linux-amd64.tar.gz && ln -s /usr/local/go/bin/go /bin/go 
 
 ENV USER user
 ENV HOME /home/user
