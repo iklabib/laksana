@@ -38,16 +38,7 @@ func (mn Minijail) argsBuilder(dir string, commands []string) []string {
 	return append(args, commands...)
 }
 
-func (mn Minijail) PreExec(dir string) {
-	// minijail0 -t does not automatically create /tmp
-	if err := os.Mkdir(path.Join(dir, "tmp"), 0765); err != nil {
-		panic(err)
-	}
-}
-
 func (mn Minijail) ExecConfined(dir string, commands []string) model.SandboxExecResult {
-	mn.PreExec(dir)
-
 	args := mn.argsBuilder(dir, commands)
 
 	var stdoutBuff bytes.Buffer
