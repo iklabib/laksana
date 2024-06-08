@@ -23,13 +23,6 @@ under the License.
 
 package apparmor // import "github.com/docker/docker/profiles/apparmor"
 
-// NOTE: This profile is replicated in containerd and libpod. If you make a
-//       change to this profile, please make follow-up PRs to those projects so
-//       that these rules can be synchronised (because any issue with this
-//       profile will likely affect libpod and containerd).
-// TODO: Move this to a common project so we can maintain it in one spot.
-
-// baseTemplate defines the default apparmor profile for containers.
 const baseTemplate = `
 {{range $value := .Imports}}
 {{$value}}

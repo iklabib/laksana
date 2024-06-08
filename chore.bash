@@ -3,7 +3,6 @@
 find_container_engine() {
   local engine
 
-  # Check if MARKISA_CONTAINER_ENGINE is set
   if [[ -n "${MARKISA_CONTAINER_ENGINE}" ]]; then
     engine="${MARKISA_CONTAINER_ENGINE}"
   fi
@@ -18,7 +17,6 @@ find_container_engine() {
     engine=$(command -v podman 2>/dev/null)
   fi
 
-  # If neither is found, print an error message and exit
   if [[ -z "${engine}" ]]; then
     echo "Error: no container engine found in path" >&2
     exit 1
@@ -49,7 +47,7 @@ main() {
 
   run() {
     # TODO: do something about selinux
-    docker run --rm -it -e BASE_URL=:8080 -p 8080:8080 \
+    "${CONTAINER_ENGINE}" run --rm -it -e BASE_URL=:8080 -p 8080:8080 \
            --cap-add=sys_admin \
            --cap-add=sys_chroot \
            --cap-add=sys_resource \
