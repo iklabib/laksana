@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
-	"path"
 
 	"codeberg.org/iklabib/markisa/model"
 )
@@ -14,20 +13,23 @@ type Minijail struct {
 	ConfigPath string
 }
 
-func NewMinijail() Minijail {
+func NewMinijail(config string) Minijail {
 	minijail, err := exec.LookPath("minijail0")
 	if err != nil {
 		panic(err)
 	}
 
-	executable, err := os.Executable()
+	file, err := os.CreateTemp("", "minijail*.cfg")
 	if err != nil {
 		panic(err)
 	}
 
+	file.WriteString(config)
+	file.Close()
+
 	return Minijail{
 		Path:       minijail,
-		ConfigPath: path.Join(path.Dir(executable), "configs/minijail.cfg"),
+		ConfigPath: file.Name(),
 	}
 }
 

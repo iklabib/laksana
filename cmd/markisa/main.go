@@ -7,6 +7,7 @@ import (
 	"codeberg.org/iklabib/markisa/model"
 	"codeberg.org/iklabib/markisa/storage"
 	"codeberg.org/iklabib/markisa/toolchains"
+	"codeberg.org/iklabib/markisa/util"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
@@ -15,6 +16,7 @@ func main() {
 	BASE_URL := os.Getenv("BASE_URL")
 
 	e := echo.New()
+	e.Validator = util.NewEchoValidator()
 
 	e.Use(middleware.Gzip())
 	e.Use(middleware.CORS())
@@ -37,9 +39,10 @@ func main() {
 		}
 
 		submmission := model.Submission{
-			Type:    req.Type,
-			Src:     req.Src,
-			SrcTest: testCase,
+			Type:          req.Type,
+			Src:           req.Src,
+			SrcTest:       testCase,
+			SandboxConfig: req.SandboxConfig,
 		}
 
 		evaluationResult := toolchains.EvaluateSubmission(submmission)

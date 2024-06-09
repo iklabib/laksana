@@ -18,7 +18,7 @@ func NewPython() *Python {
 }
 
 // create temporary directory and write source code to file
-func (p Python) Prep(src string, srcTest string) (string, error) {
+func (p Python) Prep(submission model.Submission) (string, error) {
 	tempDir, err := os.MkdirTemp(".", "box")
 	if err != nil {
 		return tempDir, errors.New("failed to create temp dir")
@@ -28,28 +28,20 @@ func (p Python) Prep(src string, srcTest string) (string, error) {
 		return tempDir, errors.New("failed to set permission for temp dir")
 	}
 
-	submmission := filepath.Join(tempDir, "main.py")
-	if file, err := os.Create(submmission); err != nil {
+	err = os.WriteFile(filepath.Join(tempDir, "main.py"), []byte(submission.Src), 0444)
+	if err != nil {
 		return tempDir, errors.New("failed to write to file")
-	} else {
-		file.WriteString(src)
-		file.Close()
-		os.Chmod(submmission, 0444)
 	}
 
-	testCases := filepath.Join(tempDir, "test.py")
-	if file, err := os.Create(testCases); err != nil {
+	err = os.WriteFile(filepath.Join(tempDir, "test.py"), []byte(submission.SrcTest), 0444)
+	if err != nil {
 		return tempDir, errors.New("failed to write to file")
-	} else {
-		file.WriteString(srcTest)
-		file.Close()
-		os.Chmod(submmission, 0444)
 	}
 
 	return tempDir, nil
 }
 
-func (p Python) Eval(dir string) model.RunResult {
+func (p Python) Eval(dir string, sandbox containers.Sandbox) model.RunResult {
 	executable, err := exec.LookPath("python3")
 	if err != nil {
 		return model.RunResult{
@@ -58,9 +50,9 @@ func (p Python) Eval(dir string) model.RunResult {
 			Stderr:   err.Error(),
 		}
 	}
+
 	commands := []string{executable, "test.py"}
-	minijail := containers.NewMinijail()
-	execResult := minijail.ExecConfined(dir, commands)
+	execResult := sandbox.ExecConfined(dir, commands)
 	exitCode := util.GetExitCode(&execResult.Error)
 
 	// we assumed that non-zero exit is error

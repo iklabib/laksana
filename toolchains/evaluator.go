@@ -3,14 +3,16 @@ package toolchains
 import (
 	"fmt"
 
+	"codeberg.org/iklabib/markisa/containers"
 	"codeberg.org/iklabib/markisa/model"
 )
 
 func EvaluateSubmission(submission model.Submission) model.RunResult {
+	minijail := containers.NewMinijail(submission.SandboxConfig)
 	switch submission.Type {
 	case "python":
 		python := NewPython()
-		dir, err := python.Prep(submission.Src, submission.SrcTest)
+		dir, err := python.Prep(submission)
 
 		if err != nil {
 			return model.RunResult{
@@ -20,7 +22,7 @@ func EvaluateSubmission(submission model.Submission) model.RunResult {
 			}
 		}
 
-		return python.Eval(dir)
+		return python.Eval(dir, minijail)
 
 	default:
 		return model.RunResult{
