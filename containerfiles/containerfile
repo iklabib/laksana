@@ -18,12 +18,12 @@ RUN apk add --no-cache musl musl-dev clang bubblewrap git python3 py3-pip py3-py
 ADD https://go.dev/dl/go1.22.3.linux-amd64.tar.gz go1.22.3.linux-amd64.tar.gz 
 RUN tar -xzf go1.22.3.linux-amd64.tar.gz -C /usr/local && rm go1.22.3.linux-amd64.tar.gz && ln -s /usr/local/go/bin/go /bin/go 
 
-COPY --chmod=775 --from=build /minijail/minijail0 /usr/bin/minijail0
-COPY --chmod=775 --from=build /minijail/libminijail.so /usr/lib/libminijail.so
-COPY --chmod=775 --from=build /minijail/libminijailpreload.so /lib/libminijailpreload.so
-COPY --chmod=644 --from=build /minijail/libminijail.h /usr/include/libminijail.h
-COPY --chmod=644 --from=build /minijail/minijail0.1 /minijail/minijail0.1
-COPY --chmod=644 --from=build /minijail/minijail0.5 /minijail/minijail0.5
+COPY --chmod=775 --from=build /build/minijail/minijail0 /usr/bin/minijail0
+COPY --chmod=775 --from=build /build/minijail/libminijail.so /usr/lib/libminijail.so
+COPY --chmod=775 --from=build /build/minijail/libminijailpreload.so /lib/libminijailpreload.so
+COPY --chmod=644 --from=build /build/minijail/libminijail.h /usr/include/libminijail.h
+COPY --chmod=644 --from=build /build/minijail/minijail0.1 /minijail/minijail0.1
+COPY --chmod=644 --from=build /build/minijail/minijail0.5 /minijail/minijail0.5
 
 ENV USER user
 ENV HOME /home/user
