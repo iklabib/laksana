@@ -1,58 +1,30 @@
 #!/bin/bash
 
-find_container_engine() {
-  local engine
-
-  if [[ -n "${MARKISA_CONTAINER_ENGINE}" ]]; then
-    engine="${MARKISA_CONTAINER_ENGINE}"
-  fi
-
-  # If not set, try to find docker
-  if [[ -z "${engine}" ]]; then
-    engine=$(command -v docker 2>/dev/null)
-  fi
-
-  # If docker is not found, try to find podman
-  if [[ -z "${engine}" ]]; then
-    engine=$(command -v podman 2>/dev/null)
-  fi
-
-  if [[ -z "${engine}" ]]; then
-    echo "Error: no container engine found in path" >&2
-    exit 1
-  fi
-
-  echo "${engine}"
-}
-
 main() {
-  CONTAINER_ENGINE=$(find_container_engine)
-  echo "Using ${CONTAINER_ENGINE}"
-
   build() {
     clean
     mkdir -p "build"
     go build -o build/apparmor cmd/apparmor/main.go
     build/apparmor
-    "${CONTAINER_ENGINE}" build . -t "quay.io/iklabib/markisa" -f "containerfiles/containerfile"
+    docker build . -t "quay.io/iklabib/markisa" -f "containerfiles/containerfile"
   }
 
   setup() {
     if [ "$UID" -eq 0 ]; then
       "$@"
     else
+      sudo cp markisa.cfg /etc/apparmor.d/markisa
+      sudo aa-enforce /etc/apparmor.d/markisa
+      sudo apparmor_parser -Kr /etc/apparmor.d/markisa
       sudo apparmor_parser -Kr markisa.cfg
     fi 
   }
 
   run() {
-    # TODO: do something about selinux
-    "${CONTAINER_ENGINE}" run --rm -it -e BASE_URL=:8080 -p 8080:8080 \
-           --cap-add=sys_admin \
-           --cap-add=sys_chroot \
-           --cap-add=sys_resource \
-           --security-opt apparmor=markisa \
-           --security-opt label=disable quay.io/iklabib/markisa
+    docker run --rm -it -e BASE_URL=:8080 -p $BASE_URL:8080 \
+           --cap-add sys_admin \
+           --cap-add sys_resource \
+           --security-opt apparmor=markisa quay.io/iklabib/markisa
   }
 
   clean() {
