@@ -16,7 +16,6 @@ main() {
       sudo cp markisa.cfg /etc/apparmor.d/markisa
       sudo aa-enforce /etc/apparmor.d/markisa
       sudo apparmor_parser -Kr /etc/apparmor.d/markisa
-      sudo apparmor_parser -Kr markisa.cfg
     fi 
   }
 
