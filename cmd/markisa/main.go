@@ -5,7 +5,6 @@ import (
 	"os"
 
 	"codeberg.org/iklabib/markisa/model"
-	"codeberg.org/iklabib/markisa/storage"
 	"codeberg.org/iklabib/markisa/toolchains"
 	"codeberg.org/iklabib/markisa/util"
 	"github.com/labstack/echo/v4"
@@ -21,28 +20,14 @@ func main() {
 	e.Use(middleware.Gzip())
 	e.Use(middleware.CORS())
 
-	exercise := storage.NewExerciseDefault()
-
 	e.POST("/run", func(c echo.Context) error {
-		var req model.SubmissionRequest
-		if err := c.Bind(&req); err != nil {
+		var submmission model.Submission
+		if err := c.Bind(&submmission); err != nil {
 			return c.String(http.StatusBadRequest, "Bad Request")
 		}
 
-		if err := c.Validate(req); err != nil {
+		if err := c.Validate(submmission); err != nil {
 			return err
-		}
-
-		testCase, err := exercise.RetrieveTestCase(req.ExerciseId)
-		if err != nil {
-			return c.String(http.StatusBadRequest, "Bad Request: "+err.Error())
-		}
-
-		submmission := model.Submission{
-			Type:          req.Type,
-			Src:           req.Src,
-			SrcTest:       testCase,
-			SandboxConfig: req.SandboxConfig,
 		}
 
 		evaluationResult := toolchains.EvaluateSubmission(submmission)

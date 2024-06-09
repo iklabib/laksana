@@ -35,14 +35,6 @@ type RunResponse struct {
 	Status string
 }
 
-type SubmissionRequest struct {
-	ExerciseId    string `json:"exercise_id" validate:"required"`
-	SandboxConfig string `json:"sandbox_config" validate:"required"`
-	User          string `json:"user" validate:"required"`
-	Type          string `json:"type" validate:"required"`
-	Src           string `json:"src" validate:"required"`
-}
-
 type Submission struct {
 	Type          string `json:"type"`
 	Src           string `json:"src"`
