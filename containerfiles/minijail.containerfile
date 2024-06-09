@@ -1,23 +1,21 @@
 FROM docker.io/library/alpine:3.20 as build
-RUN apk add --no-cache gcc bash libcap-dev alpine-sdk
-RUN git clone --depth 1 --branch linux-v2024.05.22 https://chromium.googlesource.com/chromiumos/platform/minijail && cd minijail && make 
+RUN apk add --no-cache clang make libcap-dev
+ADD https://chromium.googlesource.com/chromiumos/platform/minijail/+archive/99e8fd4bf9aaf62eab9b3cabddc2939cb3427029.tar.gz minijail.tar.gz
+RUN mkdir minijail && tar -xzf minijail.tar.gz -C minijail && rm minijail.tar.gz && cd minijail && make
 
 FROM docker.io/library/alpine:3.20
-# copy minijail0, libminijail.so, libminijailpreload.so to final image
-COPY --from=build /minijail/minijail0 /usr/bin/minijail0
-COPY --from=build /minijail/libminijail.so /usr/lib/libminijail.so
-COPY --from=build /minijail/libminijailpreload.so /lib/libminijailpreload.so
-COPY --from=build /minijail/libminijail.h /usr/include/libminijail.h
-COPY --from=build /minijail/minijail0.1 /usr/share/man/man1/minijail0.1
-COPY --from=build /minijail/minijail0.5 /usr/share/man/man5/minijail0.5
-
-RUN chmod 755 /usr/bin/minijail0 \
-    && chmod 755 /usr/lib/libminijail.so \
-    && chmod 755 /lib/libminijailpreload.so \
-    && chmod 644 /usr/include/libminijail.h \
-    && chmod 644 /usr/share/man/man1/minijail0.1 \
-    && chmod 644 /usr/share/man/man5/minijail0.5
-
 RUN apk add --no-cache libcap bash
+
+COPY --chmod=775 --from=build /minijail/minijail0 /usr/bin/minijail0
+COPY --chmod=775 --from=build /minijail/libminijail.so /usr/lib/libminijail.so
+COPY --chmod=775 --from=build /minijail/libminijailpreload.so /lib/libminijailpreload.so
+COPY --chmod=644 --from=build /minijail/libminijail.h /usr/include/libminijail.h
+COPY --chmod=644 --from=build /minijail/minijail0.1 /minijail/minijail0.1
+COPY --chmod=644 --from=build /minijail/minijail0.5 /minijail/minijail0.5
+
+ENV USER user
+ENV HOME /home/user
+RUN adduser -D --home $HOME $USER 
+RUN chown -R user:user ${HOME}
 
 ENTRYPOINT [ "bash" ]

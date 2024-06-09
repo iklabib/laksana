@@ -15,23 +15,15 @@ FROM docker.io/library/alpine:3.20
 
 RUN apk add --no-cache musl musl-dev clang bubblewrap git python3 py3-pip py3-pytest libcap neovim bash 
 
-COPY --from=build ["/build/minijail/minijail0", \
-                   "/build/minijail/libminijail.so", \
-                   "/build/minijail/libminijailpreload.so", \
-                   "/build/minijail/libminijail.h", \
-                   "/build/minijail/minijail0.1", \
-                   "/build/minijail/minijail0.5", \
-                   "./"]
-
-RUN install -m755 -D minijail0 /usr/bin/minijail0 && \
-    install -m755 -D libminijail.so /usr/lib/libminijail.so && \
-    install -m755 -D libminijailpreload.so /lib/libminijailpreload.so && \
-    install -m644 -D libminijail.h /usr/include/libminijail.h && \
-    install -m644 -D minijail0.1 /usr/share/man/man1/minijail0.1 && \
-    install -m644 -D minijail0.5 /usr/share/man/man5/minijail0.5
-
 ADD https://go.dev/dl/go1.22.3.linux-amd64.tar.gz go1.22.3.linux-amd64.tar.gz 
 RUN tar -xzf go1.22.3.linux-amd64.tar.gz -C /usr/local && rm go1.22.3.linux-amd64.tar.gz && ln -s /usr/local/go/bin/go /bin/go 
+
+COPY --chmod=775 --from=build /minijail/minijail0 /usr/bin/minijail0
+COPY --chmod=775 --from=build /minijail/libminijail.so /usr/lib/libminijail.so
+COPY --chmod=775 --from=build /minijail/libminijailpreload.so /lib/libminijailpreload.so
+COPY --chmod=644 --from=build /minijail/libminijail.h /usr/include/libminijail.h
+COPY --chmod=644 --from=build /minijail/minijail0.1 /minijail/minijail0.1
+COPY --chmod=644 --from=build /minijail/minijail0.5 /minijail/minijail0.5
 
 ENV USER user
 ENV HOME /home/user
