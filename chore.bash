@@ -20,10 +20,13 @@ main() {
   }
 
   run() {
-    docker run --rm -it -e BASE_URL=:8080 -p $BASE_URL:8080 \
+    docker run --rm -it -p $BASE_URL:8000 \
            --cap-add sys_admin \
            --cap-add sys_resource \
-           --security-opt apparmor=markisa quay.io/iklabib/markisa
+           --entrypoint /bin/bash \
+           --security-opt apparmor=markisa \
+           --security-opt seccomp=configs/markisa.json \
+           quay.io/iklabib/markisa
   }
 
   clean() {
