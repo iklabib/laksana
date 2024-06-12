@@ -15,8 +15,8 @@ FROM docker.io/library/alpine:3.20
 
 RUN apk add --no-cache musl musl-dev clang bubblewrap git python3 py3-pip py3-pytest libcap neovim bash 
 
-ADD https://go.dev/dl/go1.22.3.linux-amd64.tar.gz go1.22.3.linux-amd64.tar.gz 
-RUN tar -xzf go1.22.3.linux-amd64.tar.gz -C /usr/local && rm go1.22.3.linux-amd64.tar.gz && ln -s /usr/local/go/bin/go /bin/go 
+ADD https://go.dev/dl/go1.22.4.linux-amd64.tar.gz go1.22.4.linux-amd64.tar.gz 
+RUN tar -xzf go1.22.4.linux-amd64.tar.gz -C /usr/local && rm go1.22.4.linux-amd64.tar.gz && ln -s /usr/local/go/bin/go /bin/go 
 
 COPY --chmod=775 --from=build /build/minijail/minijail0 /usr/bin/minijail0
 COPY --chmod=775 --from=build /build/minijail/libminijail.so /usr/lib/libminijail.so
