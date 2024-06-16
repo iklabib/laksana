@@ -32,12 +32,6 @@ func main() {
 
 		evaluationResult := toolchains.EvaluateSubmission(submmission)
 
-		// 0 success
-		// -1 is internal error
-		// -2 is evaluation error
-		if evaluationResult.ExitCode == -1 {
-			return c.String(http.StatusInternalServerError, "Internal Error")
-		}
 		return c.JSON(http.StatusOK, evaluationResult)
 	})
 
