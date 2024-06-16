@@ -14,7 +14,7 @@ type Bubblewrap struct {
 }
 
 func NewBubblewrap() Bubblewrap {
-	var bwrap = Bubblewrap{}
+	bwrap := Bubblewrap{}
 	path, err := exec.LookPath("bwrap")
 	if err != nil {
 		panic(err)
@@ -69,7 +69,7 @@ func (bw Bubblewrap) ExecConfined(dir string, commands []string) model.SandboxEx
 
 	return model.SandboxExecResult{
 		Error:  err,
-		Stdout: stdoutBuff.String(),
-		Stderr: stderrBuff.String(),
+		Stdout: stdoutBuff,
+		Stderr: stderrBuff,
 	}
 }
