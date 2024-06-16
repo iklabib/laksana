@@ -1,38 +1,13 @@
 package model
 
-type Box struct {
-	Id      string
-	Type    string
-	Version string
-}
-
-// buil stage model
-type BuildResult struct {
-	ExitCode   int
-	Status     string
-	Stdout     string
-	Stderr     string
-	Executable []byte
-}
-
-type BuilderResponse struct {
-	Err string // internal error reason
-	BuildResult
-}
+import (
+	"bytes"
+)
 
 // run stage model
 type RunResult struct {
-	ExitCode int
-	Status   string
-	Stdout   string
-	Stderr   string
-}
-
-// Run endpoint model
-type RunResponse struct {
-	Build  BuildResult
-	Run    RunResult
-	Status string
+	Builds []CompileError `json:"builds"`
+	Tests  []TestResult   `json:"tests"`
 }
 
 type Submission struct {
@@ -44,6 +19,20 @@ type Submission struct {
 
 type SandboxExecResult struct {
 	Error  error
-	Stdout string
-	Stderr string
+	Stdout bytes.Buffer
+	Stderr bytes.Buffer
+}
+
+type CompileError struct {
+	Filename string
+	Message  string
+	Line     int
+	Column   int
+}
+
+type TestResult struct {
+	Status string // PASS or FAILED
+	Name   string
+	Output string
+	Order  int
 }

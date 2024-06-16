@@ -1,8 +1,12 @@
 package util
 
 import (
+	"fmt"
+	"io"
 	"os"
 	"os/exec"
+
+	"codeberg.org/iklabib/markisa/util/fastrand"
 )
 
 func GetExitCode(err *error) int {
@@ -13,13 +17,41 @@ func GetExitCode(err *error) int {
 	if exitError, ok := (*err).(*exec.ExitError); ok {
 		return exitError.ExitCode()
 	}
-	return 1
+
+	return 0
 }
 
-func CreateTempDir() (string, error) {
-	tempDir, err := os.MkdirTemp("", "box_")
+func CreateReadOnlyFile(dest string, data []byte) error {
+	err := os.WriteFile(dest, data, 0o0444)
 	if err != nil {
-		return "", err
+		return fmt.Errorf("failed to write to file")
 	}
-	return tempDir, nil
+	return nil
+}
+
+func Copy(srcFile, dstFile string) error {
+	out, err := os.Create(dstFile)
+	if err != nil {
+		return err
+	}
+
+	defer out.Close()
+
+	in, err := os.Open(srcFile)
+	if err != nil {
+		return err
+	}
+
+	defer in.Close()
+
+	_, err = io.Copy(out, in)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func RandomBoxName() string {
+	return fmt.Sprintf("box_%d", fastrand.Uint32())
 }
