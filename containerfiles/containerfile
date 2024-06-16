@@ -6,34 +6,32 @@ RUN apk add --no-cache clang make libcap-dev
 WORKDIR /build
 COPY cmd/markisa/main.go .
 COPY . .
-RUN go mod tidy && go build -o markisa
+RUN go build -o markisa
 
 ADD https://chromium.googlesource.com/chromiumos/platform/minijail/+archive/99e8fd4bf9aaf62eab9b3cabddc2939cb3427029.tar.gz minijail.tar.gz
 RUN mkdir minijail && tar -xzf minijail.tar.gz -C minijail && rm minijail.tar.gz && cd minijail && make
 
 FROM docker.io/library/alpine:3.20
 
-RUN apk add --no-cache musl musl-dev clang bubblewrap git python3 py3-pip py3-pytest libcap neovim bash 
+RUN apk add --no-cache musl musl-dev clang git libcap bash curl xz
 
+ENV PATH=/usr/local/go/bin/:${PATH}
 ADD https://go.dev/dl/go1.22.4.linux-amd64.tar.gz go1.22.4.linux-amd64.tar.gz 
-RUN tar -xzf go1.22.4.linux-amd64.tar.gz -C /usr/local && rm go1.22.4.linux-amd64.tar.gz && ln -s /usr/local/go/bin/go /bin/go 
+RUN tar -xzf go1.22.4.linux-amd64.tar.gz -C /usr/local && rm go1.22.4.linux-amd64.tar.gz && go build std os cmd fmt
 
 COPY --chmod=775 --from=build /build/minijail/minijail0 /usr/bin/minijail0
 COPY --chmod=775 --from=build /build/minijail/libminijail.so /usr/lib/libminijail.so
 COPY --chmod=775 --from=build /build/minijail/libminijailpreload.so /lib/libminijailpreload.so
 COPY --chmod=644 --from=build /build/minijail/libminijail.h /usr/include/libminijail.h
-COPY --chmod=644 --from=build /build/minijail/minijail0.1 /minijail/minijail0.1
-COPY --chmod=644 --from=build /build/minijail/minijail0.5 /minijail/minijail0.5
+COPY --chmod=644 --from=build /build/minijail/minijail0.1 /usr/share/man/man1/minijail0.1
+COPY --chmod=644 --from=build /build/minijail/minijail0.5 /usr/share/man/man1/minijail0.5
 
-ENV USER user
-ENV HOME /home/user
-RUN adduser -D --home $HOME $USER 
-RUN chown -R user:user ${HOME}
+RUN adduser -D --home /home/user user
 
 ENV BASE_URL "0.0.0.0:8000"
 WORKDIR /app
 COPY --from=build /build/markisa .
-COPY --from=build /build/exercises exercises
-COPY configs/minijail.cfg configs/minijail.cfg
+COPY configs/ configs/
+COPY runner/ runner/
 
 ENTRYPOINT [ "/app/markisa" ]
