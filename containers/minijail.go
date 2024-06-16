@@ -53,7 +53,7 @@ func (mn Minijail) ExecConfined(dir string, commands []string) model.SandboxExec
 
 	return model.SandboxExecResult{
 		Error:  err,
-		Stdout: stdoutBuff.String(),
-		Stderr: stderrBuff.String(),
+		Stdout: stdoutBuff,
+		Stderr: stderrBuff,
 	}
 }
