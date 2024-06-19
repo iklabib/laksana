@@ -6,8 +6,10 @@ import (
 
 // run stage model
 type RunResult struct {
-	Builds []CompileError `json:"builds"`
-	Tests  []TestResult   `json:"tests"`
+	Message  string         `json:"message"`
+	Builds   []CompileError `json:"builds"`
+	Tests    []TestResult   `json:"tests"`
+	ExitCode int            `json:"exit_code"`
 }
 
 type Submission struct {
