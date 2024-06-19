@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"codeberg.org/iklabib/markisa/model"
 )
@@ -31,6 +32,10 @@ func NewMinijail(config string) Minijail {
 		Path:       minijail,
 		ConfigPath: file.Name(),
 	}
+}
+
+func (mn Minijail) Clean() {
+	os.RemoveAll(filepath.Dir(mn.Path))
 }
 
 func (mn Minijail) argsBuilder(dir string, commands []string) []string {
