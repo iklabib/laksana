@@ -6,17 +6,22 @@ import (
 
 	"codeberg.org/iklabib/markisa/containers"
 	"codeberg.org/iklabib/markisa/model"
+	"codeberg.org/iklabib/markisa/util"
 )
 
 func EvaluateSubmission(submission model.Submission) model.RunResult {
 	minijail := containers.NewMinijail(submission.SandboxConfig)
+	defer minijail.Clean()
+
 	switch submission.Type {
 	case "python":
 		python := NewPython()
 		dir, err := python.Prep(submission)
 		if err != nil {
-			log.Println(err.Error())
-			return model.RunResult{}
+			return model.RunResult{
+				ExitCode: util.GetExitCode(&err),
+				Message:  err.Error(),
+			}
 		}
 
 		return python.Eval(dir, minijail)
@@ -25,14 +30,18 @@ func EvaluateSubmission(submission model.Submission) model.RunResult {
 		golang := NewGolang()
 		dir, err := golang.Prep(submission)
 		if err != nil {
-			log.Println(err.Error())
-			return model.RunResult{}
+			return model.RunResult{
+				ExitCode: util.GetExitCode(&err),
+				Message:  err.Error(),
+			}
 		}
 
 		result := golang.Eval(dir, minijail)
 		if err := os.RemoveAll(dir); err != nil {
-			log.Println(err.Error())
-			return model.RunResult{}
+			return model.RunResult{
+				ExitCode: util.GetExitCode(&err),
+				Message:  err.Error(),
+			}
 		}
 
 		return result

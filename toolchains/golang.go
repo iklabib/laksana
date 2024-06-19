@@ -67,9 +67,10 @@ func (g Golang) Eval(dir string, sandbox containers.Sandbox) model.RunResult {
 
 	buildTestStage := g.buildTest(executable, dir, sandbox)
 	if err := buildTestStage.Error; err != nil {
-		log.Println(err.Error())
 		return model.RunResult{
-			Builds: g.ParseCompileErrors(buildTestStage.Stdout),
+			ExitCode: util.GetExitCode(&err),
+			Message:  err.Error(),
+			Builds:   g.ParseCompileErrors(buildTestStage.Stdout),
 		}
 	}
 
@@ -78,14 +79,18 @@ func (g Golang) Eval(dir string, sandbox containers.Sandbox) model.RunResult {
 
 	// when exit code is 1 we can ignore it
 	// it is likely because of test fail, not actual error
-	if util.GetExitCode(&execResult.Error) > 1 {
-		log.Println(execResult.Error.Error())
-		return model.RunResult{}
+	exitCode := util.GetExitCode(&execResult.Error)
+	if exitCode > 1 {
+		return model.RunResult{
+			ExitCode: exitCode,
+			Message:  execResult.Error.Error(),
+		}
 	}
 
 	testResult := g.ParseTestEvent(execResult.Stdout)
 	return model.RunResult{
-		Tests: testResult,
+		ExitCode: exitCode,
+		Tests:    testResult,
 	}
 }
 
@@ -102,8 +107,7 @@ func (g Golang) ParseTestEvent(out bytes.Buffer) []model.TestResult {
 	for idx := 1; ; {
 		line, err := out.ReadString('\n')
 		if err != nil {
-			log.Println(err.Error())
-			continue
+			break
 		}
 
 		var testEvent goTestEvent
@@ -205,10 +209,10 @@ func parseError(out string) (model.CompileError, error) {
 }
 
 type goTestEvent struct {
-	Time    time.Time `json:"Time"`
-	Action  string    `json:"Action"`
-	Package string    `json:"Package"`
-	Test    string    `json:"Test,omitempty"`
-	Output  string    `json:"Output,omitempty"`
-	Elapsed float64   `json:"Elapsed,omitempty"`
+	Time    time.Time `json:"time"`
+	Action  string    `json:"action"`
+	Package string    `json:"package"`
+	Test    string    `json:"test,omitempty"`
+	Output  string    `json:"output,omitempty"`
+	Elapsed float64   `json:"elapsed,omitempty"`
 }
