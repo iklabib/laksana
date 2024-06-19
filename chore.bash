@@ -5,9 +5,7 @@ main() {
 		clean
 		go mod download
 		go mod vendor
-		mkdir -p "build"
-		go build -o build/apparmor cmd/apparmor/main.go
-		build/apparmor
+		go run cmd/apparmor/main.go
 		podman build . -t "quay.io/iklabib/markisa" -f "containerfiles/containerfile"
 	}
 
