@@ -35,7 +35,7 @@ func NewMinijail(config string) Minijail {
 }
 
 func (mn Minijail) Clean() {
-	os.RemoveAll(filepath.Dir(mn.Path))
+	os.Remove(filepath.Dir(mn.ConfigPath))
 }
 
 func (mn Minijail) argsBuilder(dir string, commands []string) []string {
