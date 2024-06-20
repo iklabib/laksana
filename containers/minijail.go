@@ -2,6 +2,7 @@ package containers
 
 import (
 	"bytes"
+	"context"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,11 +11,12 @@ import (
 )
 
 type Minijail struct {
+	Ctx        context.Context
 	Path       string
 	ConfigPath string
 }
 
-func NewMinijail(config string) Minijail {
+func NewMinijail(ctx context.Context, config string) Minijail {
 	minijail, err := exec.LookPath("minijail0")
 	if err != nil {
 		panic(err)
@@ -29,6 +31,7 @@ func NewMinijail(config string) Minijail {
 	file.Close()
 
 	return Minijail{
+		Ctx:        ctx,
 		Path:       minijail,
 		ConfigPath: file.Name(),
 	}
@@ -51,7 +54,7 @@ func (mn Minijail) ExecConfined(dir string, commands []string) model.SandboxExec
 	var stdoutBuff bytes.Buffer
 	var stderrBuff bytes.Buffer
 
-	cmd := exec.Command(mn.Path, args...)
+	cmd := exec.CommandContext(mn.Ctx, mn.Path, args...)
 	cmd.Stdout = &stdoutBuff
 	cmd.Stderr = &stderrBuff
 	err := cmd.Run()

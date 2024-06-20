@@ -30,7 +30,8 @@ func main() {
 			return err
 		}
 
-		evaluationResult := toolchains.EvaluateSubmission(submmission)
+		evaluator := toolchains.NewEvaluator(c.Request().Context())
+		evaluationResult := evaluator.Submission(submmission)
 
 		return c.JSON(http.StatusOK, evaluationResult)
 	})

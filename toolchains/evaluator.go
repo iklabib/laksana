@@ -1,6 +1,7 @@
 package toolchains
 
 import (
+	"context"
 	"log"
 	"os"
 
@@ -9,8 +10,18 @@ import (
 	"codeberg.org/iklabib/markisa/util"
 )
 
-func EvaluateSubmission(submission model.Submission) model.RunResult {
-	minijail := containers.NewMinijail(submission.SandboxConfig)
+type Evaluator struct {
+	Ctx context.Context
+}
+
+func NewEvaluator(ctx context.Context) *Evaluator {
+	return &Evaluator{
+		Ctx: ctx,
+	}
+}
+
+func (ev Evaluator) Submission(submission model.Submission) model.RunResult {
+	minijail := containers.NewMinijail(ev.Ctx, submission.SandboxConfig)
 	defer minijail.Clean()
 
 	switch submission.Type {
@@ -27,7 +38,7 @@ func EvaluateSubmission(submission model.Submission) model.RunResult {
 		return python.Eval(dir, minijail)
 
 	case "go":
-		golang := NewGolang()
+		golang := NewGolang(ev.Ctx)
 		dir, err := golang.Prep(submission)
 		if err != nil {
 			return model.RunResult{

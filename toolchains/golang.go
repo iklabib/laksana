@@ -2,6 +2,7 @@ package toolchains
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -17,10 +18,14 @@ import (
 	"codeberg.org/iklabib/markisa/util"
 )
 
-type Golang struct{}
+type Golang struct {
+	Ctx context.Context
+}
 
-func NewGolang() *Golang {
-	return &Golang{}
+func NewGolang(ctx context.Context) *Golang {
+	return &Golang{
+		Ctx: ctx,
+	}
 }
 
 func (g Golang) Prep(submission model.Submission) (string, error) {
@@ -70,7 +75,7 @@ func (g Golang) Eval(dir string, sandbox containers.Sandbox) model.RunResult {
 		return model.RunResult{
 			ExitCode: util.GetExitCode(&err),
 			Message:  err.Error(),
-			Builds:   g.ParseCompileErrors(buildTestStage.Stdout),
+			Builds:   g.ParseCompileErrors(buildTestStage.Stderr),
 		}
 	}
 
