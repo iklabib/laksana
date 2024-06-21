@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"net/http"
 	"os"
 
@@ -30,10 +31,31 @@ func main() {
 			return err
 		}
 
-		evaluator := toolchains.NewEvaluator(c.Request().Context())
-		evaluationResult := evaluator.Submission(submmission)
+		ctx := c.Request().Context()
 
-		return c.JSON(http.StatusOK, evaluationResult)
+		evaluator := toolchains.NewEvaluator(ctx)
+
+		resultChan := make(chan model.RunResult)
+		var evaluationResult model.RunResult
+		go func() {
+			defer close(resultChan)
+			resultChan <- evaluator.Submission(submmission)
+		}()
+
+		select {
+		case <-ctx.Done():
+			if err := ctx.Err(); err != context.Canceled {
+				return c.JSON(http.StatusOK, evaluationResult)
+			} else {
+				return c.JSON(http.StatusOK, model.RunResult{
+					ExitCode: util.GetExitCode(&err),
+					Message:  "canceled",
+				})
+			}
+
+		case result := <-resultChan:
+			return c.JSON(http.StatusOK, result)
+		}
 	})
 
 	e.Logger.Fatal(e.Start(BASE_URL))
