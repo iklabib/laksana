@@ -17,7 +17,7 @@ RUN apk add --no-cache musl musl-dev clang git libcap bash curl xz
 
 ENV PATH=/usr/local/go/bin/:${PATH}
 ADD https://go.dev/dl/go1.22.4.linux-amd64.tar.gz go1.22.4.linux-amd64.tar.gz 
-RUN tar -xzf go1.22.4.linux-amd64.tar.gz -C /usr/local && rm go1.22.4.linux-amd64.tar.gz && go build std os cmd fmt
+RUN tar -xzf go1.22.4.linux-amd64.tar.gz -C /usr/local && rm go1.22.4.linux-amd64.tar.gz
 
 COPY --chmod=775 --from=build /build/minijail/minijail0 /usr/bin/minijail0
 COPY --chmod=775 --from=build /build/minijail/libminijail.so /usr/lib/libminijail.so
@@ -26,8 +26,11 @@ COPY --chmod=644 --from=build /build/minijail/libminijail.h /usr/include/libmini
 COPY --chmod=644 --from=build /build/minijail/minijail0.1 /usr/share/man/man1/minijail0.1
 COPY --chmod=644 --from=build /build/minijail/minijail0.5 /usr/share/man/man1/minijail0.5
 
-RUN adduser -D --home /home/user user
+RUN adduser -D --home /home/user --disabled-password user
+USER user
+RUN go build std os cmd fmt
 
+USER root
 ENV BASE_URL "0.0.0.0:8000"
 WORKDIR /app
 COPY --from=build /build/markisa .
