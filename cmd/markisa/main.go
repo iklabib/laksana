@@ -5,9 +5,9 @@ import (
 	"net/http"
 	"os"
 
-	"codeberg.org/iklabib/markisa/model"
-	"codeberg.org/iklabib/markisa/toolchains"
-	"codeberg.org/iklabib/markisa/util"
+	"codeberg.org/iklabib/laksana/model"
+	"codeberg.org/iklabib/laksana/toolchains"
+	"codeberg.org/iklabib/laksana/util"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )

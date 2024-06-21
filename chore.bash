@@ -6,7 +6,7 @@ main() {
 		go mod download
 		go mod vendor
 		go run cmd/apparmor/main.go
-		podman build . -t "quay.io/iklabib/markisa" -f "containerfiles/containerfile"
+		podman build . -t "quay.io/iklabib/laksana" -f "containerfiles/containerfile"
 	}
 
 	setup() {

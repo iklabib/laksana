@@ -5,8 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
-	"codeberg.org/iklabib/markisa/containers"
-	"codeberg.org/iklabib/markisa/model"
+	"codeberg.org/iklabib/laksana/containers"
+	"codeberg.org/iklabib/laksana/model"
 )
 
 type Python struct{}

@@ -7,7 +7,7 @@ import (
 	"os/exec"
 	"path/filepath"
 
-	"codeberg.org/iklabib/markisa/model"
+	"codeberg.org/iklabib/laksana/model"
 )
 
 type Minijail struct {

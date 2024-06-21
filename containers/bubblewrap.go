@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"os/exec"
 
-	"codeberg.org/iklabib/markisa/model"
+	"codeberg.org/iklabib/laksana/model"
 )
 
 // TODO: resource limit

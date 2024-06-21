@@ -4,7 +4,7 @@ import (
 	"errors"
 	"fmt"
 
-	"codeberg.org/iklabib/markisa/profiles/apparmor"
+	"codeberg.org/iklabib/laksana/profiles/apparmor"
 )
 
 func main() {

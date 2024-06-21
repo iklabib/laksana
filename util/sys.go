@@ -6,7 +6,7 @@ import (
 	"os"
 	"os/exec"
 
-	"codeberg.org/iklabib/markisa/util/fastrand"
+	"codeberg.org/iklabib/laksana/util/fastrand"
 )
 
 func GetExitCode(err *error) int {
