@@ -2,7 +2,7 @@ package toolchains
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 
 	"codeberg.org/iklabib/markisa/containers"
@@ -58,7 +58,9 @@ func (ev Evaluator) Submission(submission model.Submission) model.RunResult {
 		return result
 
 	default:
-		log.Printf(`"%s is not supported"`, submission.Type)
-		return model.RunResult{}
+		return model.RunResult{
+			ExitCode: -1,
+			Message:  fmt.Sprintf(`"%s is not supported"`, submission.Type),
+		}
 	}
 }
