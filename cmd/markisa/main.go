@@ -32,11 +32,9 @@ func main() {
 		}
 
 		ctx := c.Request().Context()
-
 		evaluator := toolchains.NewEvaluator(ctx)
-
 		resultChan := make(chan model.RunResult)
-		var evaluationResult model.RunResult
+
 		go func() {
 			defer close(resultChan)
 			resultChan <- evaluator.Submission(submmission)
@@ -45,7 +43,10 @@ func main() {
 		select {
 		case <-ctx.Done():
 			if err := ctx.Err(); err != context.Canceled {
-				return c.JSON(http.StatusOK, evaluationResult)
+				return c.JSON(http.StatusOK, model.RunResult{
+					ExitCode: util.GetExitCode(&err),
+					Message:  err.Error(),
+				})
 			} else {
 				return c.JSON(http.StatusOK, model.RunResult{
 					ExitCode: util.GetExitCode(&err),
