@@ -23,7 +23,7 @@ main() {
 		podman run --rm -it -p 31415:8000 \
 			--cap-add sys_admin \
 			--cap-add sys_resource \
-			--security-opt seccomp=profiles/seccomp/markisa.json quay.io/iklabib/markisa
+			--security-opt seccomp=profiles/seccomp/laksana.json quay.io/iklabib/laksana
 	}
 
 	clean() {

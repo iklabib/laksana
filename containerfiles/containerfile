@@ -4,9 +4,9 @@ ENV GOPATH /go
 RUN apk add --no-cache clang make libcap-dev
 
 WORKDIR /build
-COPY cmd/markisa/main.go .
+COPY cmd/laksana/main.go .
 COPY . .
-RUN go build -o markisa
+RUN go build -o laksana
 
 ADD https://chromium.googlesource.com/chromiumos/platform/minijail/+archive/99e8fd4bf9aaf62eab9b3cabddc2939cb3427029.tar.gz minijail.tar.gz
 RUN mkdir minijail && tar -xzf minijail.tar.gz -C minijail && rm minijail.tar.gz && cd minijail && make
@@ -27,14 +27,12 @@ COPY --chmod=644 --from=build /build/minijail/minijail0.1 /usr/share/man/man1/mi
 COPY --chmod=644 --from=build /build/minijail/minijail0.5 /usr/share/man/man1/minijail0.5
 
 RUN adduser -D --home /home/user --disabled-password user
-USER user
-RUN go build std os cmd fmt
 
 USER root
 ENV BASE_URL "0.0.0.0:8000"
 WORKDIR /app
-COPY --from=build /build/markisa .
+COPY --from=build /build/laksana .
 COPY configs/ configs/
-COPY runner/ runner/
+COPY assets/ assets/
 
-ENTRYPOINT [ "/app/markisa" ]
+ENTRYPOINT [ "/app/laksana" ]
