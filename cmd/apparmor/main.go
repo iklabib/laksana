@@ -8,7 +8,7 @@ import (
 )
 
 func main() {
-	err := apparmor.GenerateProfile("markisa")
+	err := apparmor.GenerateProfile("laksana")
 	if err != nil {
 		err = errors.New("failed to generate apparmor profile: " + err.Error())
 		panic(err)

@@ -13,14 +13,14 @@ main() {
 		if [ "$UID" -eq 0 ]; then
 			"$@"
 		else
-			sudo cp markisa.cfg /etc/apparmor.d/markisa
-			sudo aa-enforce /etc/apparmor.d/markisa
-			sudo apparmor_parser -Kr /etc/apparmor.d/markisa
+			sudo cp markisa.cfg /etc/apparmor.d/laksana
+			sudo aa-enforce /etc/apparmor.d/laksana
+			sudo apparmor_parser -Kr /etc/apparmor.d/laksana
 		fi
 	}
 
 	run() {
-		podman run --rm -it -p 8000:8000 \
+		podman run --rm -it -p 31415:8000 \
 			--cap-add sys_admin \
 			--cap-add sys_resource \
 			--security-opt seccomp=profiles/seccomp/markisa.json quay.io/iklabib/markisa
