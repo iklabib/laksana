@@ -83,3 +83,4 @@ coverage
 
 *.tsbuildinfo
 vendor/
+laksana.cfg
