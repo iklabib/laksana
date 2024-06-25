@@ -3,9 +3,7 @@ package containers
 import (
 	"bytes"
 	"context"
-	"os"
 	"os/exec"
-	"path/filepath"
 
 	"codeberg.org/iklabib/laksana/model"
 )
@@ -16,29 +14,17 @@ type Minijail struct {
 	ConfigPath string
 }
 
-func NewMinijail(ctx context.Context, config string) Minijail {
+func NewMinijail(ctx context.Context, configPath string) Minijail {
 	minijail, err := exec.LookPath("minijail0")
 	if err != nil {
 		panic(err)
 	}
 
-	file, err := os.CreateTemp("", "minijail*.cfg")
-	if err != nil {
-		panic(err)
-	}
-
-	file.WriteString(config)
-	file.Close()
-
 	return Minijail{
 		Ctx:        ctx,
 		Path:       minijail,
-		ConfigPath: file.Name(),
+		ConfigPath: configPath,
 	}
-}
-
-func (mn Minijail) Clean() {
-	os.Remove(filepath.Dir(mn.ConfigPath))
 }
 
 func (mn Minijail) argsBuilder(dir string, commands []string) []string {
