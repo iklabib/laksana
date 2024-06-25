@@ -13,7 +13,9 @@ main() {
 	}
 
 	run() {
+		export GOMAXPROCS=1
 		go test --short --json
+		unset GOMAXPROCS
 	}
 
 	if [[ "$1" == "build" ]]; then
