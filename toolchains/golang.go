@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strconv"
 	"strings"
@@ -19,18 +20,20 @@ import (
 )
 
 type Golang struct {
-	Ctx context.Context
+	Ctx     context.Context
+	Workdir string
 }
 
-func NewGolang(ctx context.Context) *Golang {
+func NewGolang(ctx context.Context, workdir string) *Golang {
 	return &Golang{
-		Ctx: ctx,
+		Ctx:     ctx,
+		Workdir: workdir,
 	}
 }
 
 func (g Golang) Prep(submission model.Submission) (string, error) {
 	cwd, _ := os.Getwd()
-	tempDir, err := os.MkdirTemp(".", "box_*")
+	tempDir, err := os.MkdirTemp(g.Workdir, "box_*")
 	if err != nil {
 		return tempDir, errors.New("failed to create temp dir")
 	}
@@ -61,21 +64,23 @@ func (g Golang) Prep(submission model.Submission) (string, error) {
 	return tempDir, nil
 }
 
-func (g Golang) buildTest(executable, dir string, sandbox containers.Sandbox) model.SandboxExecResult {
-	commands := []string{executable, "run.bash", "build-test"}
-	execBuild := sandbox.ExecConfined(dir, commands)
-	return execBuild
+func (g Golang) buildTest(executable, dir string) (bytes.Buffer, error) {
+	stderr := bytes.Buffer{}
+	cmd := exec.Command(executable, "run.bash", "build-test")
+	cmd.Stderr = &stderr
+	cmd.Dir = dir
+	err := cmd.Run()
+	return stderr, err
 }
 
 func (g Golang) Eval(dir string, sandbox containers.Sandbox) model.RunResult {
 	executable := "/bin/bash"
 
-	buildTestStage := g.buildTest(executable, dir, sandbox)
-	if err := buildTestStage.Error; err != nil {
+	if stderr, err := g.buildTest(executable, dir); err != nil {
 		return model.RunResult{
 			ExitCode: util.GetExitCode(&err),
 			Message:  err.Error(),
-			Builds:   g.ParseCompileErrors(buildTestStage.Stderr),
+			Builds:   g.ParseCompileErrors(stderr),
 		}
 	}
 

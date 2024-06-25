@@ -13,10 +13,9 @@ type RunResult struct {
 }
 
 type Submission struct {
-	Type          string `json:"type"`
-	Src           string `json:"src"`
-	SrcTest       string `json:"src_test"`
-	SandboxConfig string `json:"sandbox_config" validate:"required"`
+	Type    string `json:"type"`
+	Src     string `json:"src"`
+	SrcTest string `json:"src_test"`
 }
 
 type SandboxExecResult struct {

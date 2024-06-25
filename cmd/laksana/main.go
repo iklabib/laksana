@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -21,6 +23,11 @@ func main() {
 	e.Use(middleware.Gzip())
 	e.Use(middleware.CORS())
 
+	workdir := "/tmp/laksana"
+	if err := os.Mkdir(workdir, 0o775); err != nil {
+		log.Panicln(fmt.Errorf("failed to create workdir"))
+	}
+
 	e.POST("/run", func(c echo.Context) error {
 		var submmission model.Submission
 		if err := c.Bind(&submmission); err != nil {
@@ -32,12 +39,12 @@ func main() {
 		}
 
 		ctx := c.Request().Context()
-		evaluator := toolchains.NewEvaluator(ctx)
+		evaluator := toolchains.NewEvaluator(workdir)
 		resultChan := make(chan model.RunResult)
 
 		go func() {
 			defer close(resultChan)
-			resultChan <- evaluator.Submission(submmission)
+			resultChan <- evaluator.Submission(ctx, submmission)
 		}()
 
 		select {
