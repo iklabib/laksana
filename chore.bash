@@ -1,19 +1,29 @@
 #!/bin/bash
 
 main() {
-	build() {
-		clean
+	_prebuild() {
 		go mod download
 		go mod vendor
-		go run cmd/apparmor/main.go
+	}
+
+	build() {
+		_prebuild
 		podman build . -t "quay.io/iklabib/laksana" -f "containerfiles/containerfile"
 	}
 
-	setup() {
+	apparmor() {
+		if [ "$UID" -eq 0 ]; then
+			echo "do not run as root"
+			exit
+		fi
+
+		_prebuild
+		go run cmd/apparmor/main.go
+
 		if [ "$UID" -eq 0 ]; then
 			"$@"
 		else
-			sudo cp markisa.cfg /etc/apparmor.d/laksana
+			sudo cp laksana.cfg /etc/apparmor.d/laksana
 			sudo aa-enforce /etc/apparmor.d/laksana
 			sudo apparmor_parser -Kr /etc/apparmor.d/laksana
 		fi
@@ -26,14 +36,10 @@ main() {
 			--security-opt seccomp=profiles/seccomp/laksana.json quay.io/iklabib/laksana
 	}
 
-	clean() {
-		rm -rf build
-	}
-
 	if [[ "$1" == "build" ]]; then
 		build
-	elif [[ "$1" == "setup" ]]; then
-		setup
+	elif [[ "$1" == "apparmor" ]]; then
+		apparmor
 	elif [[ "$1" == "run" ]]; then
 		run
 	else
