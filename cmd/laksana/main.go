@@ -1,70 +1,84 @@
 package main
 
 import (
-	"context"
-	"fmt"
-	"log"
-	"net/http"
-	"os"
+    "context"
+    "encoding/json"
+    "errors"
+    "fmt"
+    "log"
+    "net/http"
+    "os"
 
-	"codeberg.org/iklabib/laksana/model"
-	"codeberg.org/iklabib/laksana/toolchains"
-	"codeberg.org/iklabib/laksana/util"
-	"github.com/labstack/echo/v4"
-	"github.com/labstack/echo/v4/middleware"
+    "codeberg.org/iklabib/laksana/model"
+    "codeberg.org/iklabib/laksana/toolchains"
+    "codeberg.org/iklabib/laksana/util"
 )
 
 func main() {
-	BASE_URL := os.Getenv("BASE_URL")
+    BaseUrl := os.Getenv("BASE_URL")
 
-	e := echo.New()
-	e.Validator = util.NewEchoValidator()
+    workdir := "/tmp/laksana"
+    if err := os.Mkdir(workdir, 0o775); err != nil {
+        log.Panicln(fmt.Errorf("failed to create workdir"))
+    }
 
-	e.Use(middleware.Gzip())
-	e.Use(middleware.CORS())
+    mux := http.NewServeMux()
+    mux.HandleFunc("/run", func(w http.ResponseWriter, r *http.Request) {
+        w.Header().Set("Content-Type", "application/json")
 
-	workdir := "/tmp/laksana"
-	if err := os.Mkdir(workdir, 0o775); err != nil {
-		log.Panicln(fmt.Errorf("failed to create workdir"))
-	}
+        if r.Method != "POST" {
+            w.WriteHeader(http.StatusMethodNotAllowed)
+            return
+        }
 
-	e.POST("/run", func(c echo.Context) error {
-		var submmission model.Submission
-		if err := c.Bind(&submmission); err != nil {
-			return c.String(http.StatusBadRequest, "Bad Request")
-		}
+        var submission model.Submission
+        if err := json.NewDecoder(r.Body).Decode(&submission); err != nil {
+            http.Error(w, err.Error(), http.StatusBadRequest)
+            return
+        }
 
-		if err := c.Validate(submmission); err != nil {
-			return err
-		}
+        ctx := r.Context()
+        evaluator := toolchains.NewEvaluator(workdir)
+        resultChan := make(chan model.RunResult)
 
-		ctx := c.Request().Context()
-		evaluator := toolchains.NewEvaluator(workdir)
-		resultChan := make(chan model.RunResult)
+        go func() {
+            defer close(resultChan)
+            resultChan <- evaluator.Submission(ctx, submission)
+        }()
 
-		go func() {
-			defer close(resultChan)
-			resultChan <- evaluator.Submission(ctx, submmission)
-		}()
+        select {
+        case <-ctx.Done():
+            var res model.RunResult
+            if err := ctx.Err(); !errors.Is(err, context.Canceled) {
+                res = model.RunResult{
+                    ExitCode: util.GetExitCode(&err),
+                    Message:  err.Error(),
+                }
+            } else {
+                res = model.RunResult{
+                    ExitCode: util.GetExitCode(&err),
+                    Message:  "canceled",
+                }
+            }
 
-		select {
-		case <-ctx.Done():
-			if err := ctx.Err(); err != context.Canceled {
-				return c.JSON(http.StatusOK, model.RunResult{
-					ExitCode: util.GetExitCode(&err),
-					Message:  err.Error(),
-				})
-			} else {
-				return c.JSON(http.StatusOK, model.RunResult{
-					ExitCode: util.GetExitCode(&err),
-					Message:  "canceled",
-				})
-			}
+            result, err := json.Marshal(res)
+            if err != nil {
+                http.Error(w, err.Error(), http.StatusInternalServerError)
+                return
+            }
+            w.Write(result)
 
-		case result := <-resultChan:
-			return c.JSON(http.StatusOK, result)
-		}
-	})
+        case res := <-resultChan:
+            result, err := json.Marshal(res)
+            if err != nil {
+                http.Error(w, err.Error(), http.StatusInternalServerError)
+                return
+            }
+            w.Write(result)
+        }
+    })
 
-	e.Logger.Fatal(e.Start(BASE_URL))
+    fmt.Printf("Serving at %s \n", BaseUrl)
+    err := http.ListenAndServe(BaseUrl, mux)
+    log.Fatal(err)
 }
