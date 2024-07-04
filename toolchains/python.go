@@ -7,6 +7,7 @@ import (
 
 	"codeberg.org/iklabib/laksana/containers"
 	"codeberg.org/iklabib/laksana/model"
+	"codeberg.org/iklabib/laksana/util"
 )
 
 type Python struct{}
@@ -17,23 +18,19 @@ func NewPython() *Python {
 
 // create temporary directory and write source code to file
 func (p Python) Prep(submission model.Submission) (string, error) {
-	tempDir, err := os.MkdirTemp(".", "box")
+	tempDir, err := CreateBox(".")
 	if err != nil {
-		return tempDir, errors.New("failed to create temp dir")
+		return tempDir, err
 	}
 
-	if err := os.Chmod(tempDir, 0o0775); err != nil {
-		return tempDir, errors.New("failed to set permission for temp dir")
+	err = WriteSourceCodes(tempDir, submission.SourceCode)
+	if err != nil {
+		return tempDir, err
 	}
 
-	err = os.WriteFile(filepath.Join(tempDir, "main.py"), []byte(submission.Src), 0o0444)
+	err = util.CreateROFile(filepath.Join(tempDir, "test.py"), submission.SourceCodeTest)
 	if err != nil {
-		return tempDir, errors.New("failed to write to file")
-	}
-
-	err = os.WriteFile(filepath.Join(tempDir, "test.py"), []byte(submission.SrcTest), 0o0444)
-	if err != nil {
-		return tempDir, errors.New("failed to write to file")
+		return tempDir, errors.New("failed to write test.py")
 	}
 
 	return tempDir, nil

@@ -33,32 +33,28 @@ func NewGolang(ctx context.Context, workdir string) *Golang {
 
 func (g Golang) Prep(submission model.Submission) (string, error) {
 	cwd, _ := os.Getwd()
-	tempDir, err := os.MkdirTemp(g.Workdir, "box_*")
+	tempDir, err := CreateBox(g.Workdir)
 	if err != nil {
-		return tempDir, errors.New("failed to create temp dir")
+		return tempDir, err
 	}
 
-	if err := os.Chown(tempDir, 1000, 1000); err != nil {
-		return tempDir, errors.New("failed to set directory permission")
-	}
-
-	err = util.CreateReadOnlyFile(filepath.Join(tempDir, "main.go"), []byte(submission.Src))
+	err = WriteSourceCodes(tempDir, submission.SourceCode)
 	if err != nil {
-		return tempDir, errors.New("failed to write to main file")
+		return tempDir, err
 	}
 
-	err = util.CreateReadOnlyFile(filepath.Join(tempDir, "main_test.go"), []byte(submission.SrcTest))
+	err = util.CreateROFile(filepath.Join(tempDir, "main_test.go"), submission.SourceCodeTest)
 	if err != nil {
-		return tempDir, errors.New("failed to write to main_test file")
+		return tempDir, errors.New("failed to write main_test.go")
 	}
 
-	target := filepath.Join(cwd, "runner", "go")
-	err1 := util.Copy(filepath.Join(target, "go.mod"), filepath.Join(tempDir, "go.mod"))
-	err2 := util.Copy(filepath.Join(target, "run.bash"), filepath.Join(tempDir, "run.bash"))
-	err3 := util.Copy(filepath.Join(target, "goenv.bash"), filepath.Join(tempDir, "goenv.bash"))
-
-	if err1 != nil || err2 != nil || err3 != nil {
-		return tempDir, errors.New("failed to copy runner files")
+	fileNames := []string{"go.mod", "run.bash", "goenv.bash"}
+	for _, fileName := range fileNames {
+		srcFile := filepath.Join(cwd, "runner", "go", fileName)
+		dstFile := filepath.Join(tempDir, fileName)
+		if err := util.Copy(srcFile, dstFile); err != nil {
+			return tempDir, errors.New("failed to copy runner files")
+		}
 	}
 
 	return tempDir, nil

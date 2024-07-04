@@ -13,9 +13,15 @@ type RunResult struct {
 }
 
 type Submission struct {
-	Type    string `json:"type"`
-	Src     string `json:"src"`
-	SrcTest string `json:"src_test"`
+	Type           string       `json:"type"`
+	SourceCode     []SourceFile `json:"src"`
+	SourceCodeTest string       `json:"src_test"`
+}
+
+type SourceFile struct {
+	Name       string `json:"name"`
+	Path       string `json:"path,omitempty"`
+	SourceCode string `json:"src"`
 }
 
 type SandboxExecResult struct {
