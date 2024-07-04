@@ -21,8 +21,8 @@ func GetExitCode(err *error) int {
 	return 0
 }
 
-func CreateReadOnlyFile(dest string, data []byte) error {
-	err := os.WriteFile(dest, data, 0o0444)
+func CreateROFile(dest, data string) error {
+	err := os.WriteFile(dest, []byte(data), 0o0444)
 	if err != nil {
 		return fmt.Errorf("failed to write to file")
 	}
