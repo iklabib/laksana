@@ -85,14 +85,24 @@ catch(Exception)
 
 public class CompileError
 {
+    [JsonPropertyName("filename")]
     public string Filename {get; set;} = "";
+
+    [JsonPropertyName("message")]
     public string Message {get; set;} = "";
+
+    [JsonPropertyName("line")]
     public int Line {get; set;}
-    public int Column {get; set;}
+
+    [JsonPropertyName("character")]
+    public int Character {get; set;}
 }
 
 public class Submission 
 {
-    [JsonPropertyName("filename")] public string Filename {get; set;} = "";
-    [JsonPropertyName("content")] public string Content {get; set;} = "";
+    [JsonPropertyName("filename")] 
+    public string Filename {get; set;} = "";
+
+    [JsonPropertyName("content")] 
+    public string Content {get; set;} = "";
 }

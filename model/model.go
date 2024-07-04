@@ -6,10 +6,10 @@ import (
 
 // run stage model
 type RunResult struct {
-	Message  string         `json:"message"`
-	Builds   []CompileError `json:"builds"`
-	Tests    []TestResult   `json:"tests"`
-	ExitCode int            `json:"exit_code"`
+	Message  string       `json:"message"`
+	Builds   []BuildError `json:"builds"`
+	Tests    []TestResult `json:"tests"`
+	ExitCode int          `json:"exit_code"`
 }
 
 type Submission struct {
@@ -30,11 +30,11 @@ type SandboxExecResult struct {
 	Stderr bytes.Buffer
 }
 
-type CompileError struct {
-	Filename string
-	Message  string
-	Line     int
-	Column   int
+type BuildError struct {
+	Filename  string `json:"name"`
+	Message   string `json:"message"`
+	Line      int    `json:"line"`
+	Character int    `json:"character"`
 }
 
 type TestResult struct {

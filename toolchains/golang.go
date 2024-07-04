@@ -166,8 +166,8 @@ func (g Golang) ParseTestEvent(out bytes.Buffer) []model.TestResult {
 	return results
 }
 
-func (g Golang) ParseCompileErrors(out bytes.Buffer) []model.CompileError {
-	var compileErrors []model.CompileError
+func (g Golang) ParseCompileErrors(out bytes.Buffer) []model.BuildError {
+	var compileErrors []model.BuildError
 	// first line should be module name, skip it
 	out.ReadString('\n')
 
@@ -189,8 +189,8 @@ func (g Golang) ParseCompileErrors(out bytes.Buffer) []model.CompileError {
 	return compileErrors
 }
 
-func parseError(out string) (model.CompileError, error) {
-	var compileError model.CompileError
+func parseError(out string) (model.BuildError, error) {
+	var compileError model.BuildError
 
 	parts := strings.Split(out, ":")
 	if len(parts) < 4 {
@@ -209,7 +209,7 @@ func parseError(out string) (model.CompileError, error) {
 	if err != nil {
 		return compileError, fmt.Errorf("failed to parse column number")
 	}
-	compileError.Column = column
+	compileError.Character = column
 
 	return compileError, nil
 }
