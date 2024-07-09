@@ -26,7 +26,8 @@ public class TestManager
         {
             if (string.IsNullOrEmpty(lines)) 
             { 
-                return new BuildResult {
+                return new BuildResult 
+                {
                     Status = StatusType.INTERNAL_ERROR,
                     Message = "empty input",
                 };
@@ -35,7 +36,8 @@ public class TestManager
             var submissions = JsonSerializer.Deserialize<Submission[]>(lines);
             if (submissions == null || submissions.Count() == 0)
             {
-                return new BuildResult {
+                return new BuildResult 
+                {
                     Status = StatusType.INTERNAL_ERROR,
                     Message = "serialization failed",
                 };
@@ -173,11 +175,11 @@ public class TestManager
             string message;
             if (status == "PASSED")
             {
-            message = testCase?.SelectSingleNode("reason/message")?.InnerText ?? "";
+                message = testCase?.SelectSingleNode("reason/message")?.InnerText ?? "";
             }
             else
             {
-            message = testCase?.SelectSingleNode("reason/failure")?.InnerText ?? "";
+                message = testCase?.SelectSingleNode("reason/failure")?.InnerText ?? "";
             }
 
             var result = new TestResult
