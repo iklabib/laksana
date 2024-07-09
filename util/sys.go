@@ -52,6 +52,10 @@ func Copy(srcFile, dstFile string) error {
 	return nil
 }
 
+func RandomString() string {
+	return fmt.Sprintf("%d", fastrand.Uint32())
+}
+
 func RandomBoxName() string {
 	return fmt.Sprintf("box_%d", fastrand.Uint32())
 }
