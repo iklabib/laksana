@@ -8,7 +8,7 @@ main() {
 
 	build() {
 		_prebuild
-		podman build . -t "quay.io/iklabib/laksana" -f "containerfiles/containerfile"
+		${CONTAINER_ENGINE} build . -t "quay.io/iklabib/laksana" -f "containerfiles/containerfile"
 	}
 
 	apparmor() {
@@ -30,11 +30,27 @@ main() {
 	}
 
 	run() {
-		podman run --rm -it -p 31415:8000 \
-			--cap-add sys_admin \
-			--cap-add sys_resource \
-			--security-opt seccomp=profiles/seccomp/laksana.json quay.io/iklabib/laksana
+		if [[ "$1" == "--apparmor" ]]; then
+			${CONTAINER_ENGINE} run --rm -it -p 31415:8000 \
+				--cap-add sys_admin \
+				--cap-add sys_resource \
+				--security-opt seccomp=profiles/seccomp/laksana.json \
+				--security-opt apparmor=laksana \
+				quay.io/iklabib/laksana
+		else
+			${CONTAINER_ENGINE} run --rm -it -p 31415:8000 \
+				--cap-add sys_admin \
+				--cap-add sys_resource \
+				--security-opt seccomp=profiles/seccomp/laksana.json \
+				quay.io/iklabib/laksana
+		fi
 	}
+
+	if [[ -z "${LAKSANA_CE}" ]]; then
+		CONTAINER_ENGINE="docker"
+	else
+		CONTAINER_ENGINE="${LAKSANA_CE}"
+	fi
 
 	if [[ "$1" == "build" ]]; then
 		build
@@ -43,7 +59,7 @@ main() {
 	elif [[ "$1" == "run" ]]; then
 		run
 	else
-		echo "Usage: $0 {build|setup|run}"
+		echo "Usage: $0 {build|apparmor|run [--apparmor]}"
 		exit 1
 	fi
 }
