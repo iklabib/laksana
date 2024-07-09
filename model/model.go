@@ -4,6 +4,11 @@ import (
 	"bytes"
 )
 
+const (
+	INTERNAL_ERROR = -1
+	RUNTIME_ERROR  = -2
+)
+
 // run stage model
 type RunResult struct {
 	Message  string       `json:"message"`
@@ -13,9 +18,9 @@ type RunResult struct {
 }
 
 type Submission struct {
+	SourceCodeTest string       `json:"src_test"`
 	Type           string       `json:"type"`
 	SourceCode     []SourceFile `json:"src"`
-	SourceCodeTest string       `json:"src_test"`
 }
 
 type SourceFile struct {
@@ -38,7 +43,7 @@ type BuildError struct {
 }
 
 type TestResult struct {
-	Status string // PASS or FAILED
+	Status string // PASSED or FAILED
 	Name   string
 	Output string
 	Order  int
