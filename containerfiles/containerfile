@@ -1,23 +1,32 @@
-FROM docker.io/library/golang:alpine3.20 as build
+FROM docker.io/library/ubuntu:noble AS build
 
-ENV GOPATH /go
-RUN apk add --no-cache clang make libcap-dev
+RUN apt update && apt install -y libcap-dev make clang
 
+ADD https://go.dev/dl/go1.22.5.linux-amd64.tar.gz go1.22.5.linux-amd64.tar.gz 
+RUN tar -xzf go1.22.5.linux-amd64.tar.gz -C /usr/local && rm go1.22.5.linux-amd64.tar.gz
+
+ENV GOPATH=/go
+ENV PATH=/usr/local/go/bin/:${PATH}
 WORKDIR /build
+
+ENV CC=clang
+ADD https://chromium.googlesource.com/chromiumos/platform/minijail/+archive/99e8fd4bf9aaf62eab9b3cabddc2939cb3427029.tar.gz minijail.tar.gz
+RUN mkdir minijail && tar -xzf minijail.tar.gz -C minijail && cd minijail && make
+
 COPY cmd/laksana/main.go .
 COPY . .
 RUN go build -o laksana
 
-ADD https://chromium.googlesource.com/chromiumos/platform/minijail/+archive/99e8fd4bf9aaf62eab9b3cabddc2939cb3427029.tar.gz minijail.tar.gz
-RUN mkdir minijail && tar -xzf minijail.tar.gz -C minijail && rm minijail.tar.gz && cd minijail && make
+FROM docker.io/library/ubuntu:noble
 
-FROM docker.io/library/alpine:3.20
-
-RUN apk add --no-cache musl musl-dev clang git libcap bash curl xz
+ADD https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb packages-microsoft-prod.deb
+RUN apt update && apt install -y ./packages-microsoft-prod.deb && rm packages-microsoft-prod.deb
+RUN apt update && apt install -y git libcap2 curl xz-utils dotnet-sdk-8.0
+RUN rm -rf /var/lib/apt/lists/*
 
 ENV PATH=/usr/local/go/bin/:${PATH}
-ADD https://go.dev/dl/go1.22.4.linux-amd64.tar.gz go1.22.4.linux-amd64.tar.gz 
-RUN tar -xzf go1.22.4.linux-amd64.tar.gz -C /usr/local && rm go1.22.4.linux-amd64.tar.gz
+ADD https://go.dev/dl/go1.22.5.linux-amd64.tar.gz go1.22.5.linux-amd64.tar.gz 
+RUN tar -xzf go1.22.5.linux-amd64.tar.gz -C /usr/local && rm go1.22.5.linux-amd64.tar.gz
 
 COPY --chmod=775 --from=build /build/minijail/minijail0 /usr/bin/minijail0
 COPY --chmod=775 --from=build /build/minijail/libminijail.so /usr/lib/libminijail.so
@@ -26,17 +35,18 @@ COPY --chmod=644 --from=build /build/minijail/libminijail.h /usr/include/libmini
 COPY --chmod=644 --from=build /build/minijail/minijail0.1 /usr/share/man/man1/minijail0.1
 COPY --chmod=644 --from=build /build/minijail/minijail0.5 /usr/share/man/man1/minijail0.5
 
-ENV GOCACHE /home/user/.cache/go-build
-RUN adduser -D --home /home/user --disabled-password user
+ENV GOCACHE=/home/user/.cache/go-build
+RUN adduser --home /home/user --disabled-password user
 USER user
 RUN mkdir -p /home/user/.cache/go-build && go build std
 
 USER root
-ENV BASE_URL "0.0.0.0:8000"
+ENV BASE_URL=0.0.0.0:8000
 
 WORKDIR /app
 COPY --from=build /build/laksana .
 COPY configs/ configs/
 COPY runner/ runner/
+RUN runner/CSharp/build.bash
 
 ENTRYPOINT [ "/app/laksana" ]
