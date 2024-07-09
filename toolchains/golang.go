@@ -20,8 +20,9 @@ import (
 )
 
 type Golang struct {
-	Ctx     context.Context
-	Workdir string
+	Ctx        context.Context
+	Workdir    string
+	Submission model.Submission
 }
 
 func NewGolang(ctx context.Context, workdir string) *Golang {

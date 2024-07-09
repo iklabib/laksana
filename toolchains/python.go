@@ -10,7 +10,9 @@ import (
 	"codeberg.org/iklabib/laksana/util"
 )
 
-type Python struct{}
+type Python struct {
+	Submission model.Submission
+}
 
 func NewPython() *Python {
 	return &Python{}
