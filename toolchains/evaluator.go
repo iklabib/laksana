@@ -11,11 +11,6 @@ import (
 	"codeberg.org/iklabib/laksana/util"
 )
 
-const (
-	INTERNAL_ERROR = -1
-	RUNTIME_ERROR  = -2
-)
-
 type Evaluator struct {
 	Workdir string
 }
@@ -35,7 +30,7 @@ func (ev Evaluator) Submission(ctx context.Context, submission model.Submission)
 		dir, err := python.Prep(submission)
 		if err != nil {
 			return model.RunResult{
-				ExitCode: INTERNAL_ERROR,
+				ExitCode: model.INTERNAL_ERROR,
 				Message:  err.Error(),
 			}
 		}
@@ -49,7 +44,7 @@ func (ev Evaluator) Submission(ctx context.Context, submission model.Submission)
 		dir, err := golang.Prep(submission)
 		if err != nil {
 			return model.RunResult{
-				ExitCode: INTERNAL_ERROR,
+				ExitCode: model.INTERNAL_ERROR,
 				Message:  err.Error(),
 			}
 		}
@@ -63,6 +58,12 @@ func (ev Evaluator) Submission(ctx context.Context, submission model.Submission)
 		}
 
 		return result
+
+	case "csharp":
+		configPath, _ := filepath.Abs("configs/minijail/csharp.cfg")
+		minijail := containers.NewMinijail(ctx, configPath)
+		csharp := NewCSharp(ev.Workdir)
+		return csharp.Run(minijail)
 
 	default:
 		return model.RunResult{
