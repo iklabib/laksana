@@ -45,6 +45,7 @@ func (mn Minijail) ExecConfinedWithStdin(dir string, commands []string, stdin io
 	cmd.Stdout = &stdoutBuff
 	cmd.Stderr = &stderrBuff
 	cmd.Stdin = stdin
+	cmd.Dir = dir
 	err := cmd.Run()
 
 	return model.SandboxExecResult{
@@ -63,6 +64,7 @@ func (mn Minijail) ExecConfined(dir string, commands []string) model.SandboxExec
 	cmd := exec.CommandContext(mn.Ctx, mn.Path, args...)
 	cmd.Stdout = &stdoutBuff
 	cmd.Stderr = &stderrBuff
+	cmd.Dir = dir
 	err := cmd.Run()
 
 	return model.SandboxExecResult{
