@@ -35,10 +35,9 @@ COPY --chmod=644 --from=build /build/minijail/libminijail.h /usr/include/libmini
 COPY --chmod=644 --from=build /build/minijail/minijail0.1 /usr/share/man/man1/minijail0.1
 COPY --chmod=644 --from=build /build/minijail/minijail0.5 /usr/share/man/man1/minijail0.5
 
-ENV GOCACHE=/home/user/.cache/go-build
-RUN adduser --home /home/user --disabled-password user
-USER user
-RUN mkdir -p /home/user/.cache/go-build && go build std
+USER ubuntu
+ENV GOCACHE=/home/ubuntu/.cache/go-build
+RUN mkdir -p /home/ubuntu/.cache/go-build && go build std
 
 USER root
 ENV BASE_URL=0.0.0.0:8000
