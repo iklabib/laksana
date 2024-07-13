@@ -25,7 +25,7 @@ func (p Python) Prep(submission model.Submission) (string, error) {
 		return tempDir, err
 	}
 
-	err = WriteSourceCodes(tempDir, submission.SourceCode)
+	err = WriteSourceCodes(tempDir, submission.SourceFiles)
 	if err != nil {
 		return tempDir, err
 	}

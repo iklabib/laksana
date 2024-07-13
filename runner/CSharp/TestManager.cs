@@ -1,5 +1,6 @@
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Text;
 using NUnit;
 using NUnit.Engine;
@@ -35,8 +36,8 @@ public class TestManager
                 };
             }
 
-            var submissions = JsonSerializer.Deserialize<List<Submission>>(lines) ?? new List<Submission>();
-            if (submissions.Count() == 0)
+            var submissions = JsonSerializer.Deserialize<Submission>(lines);
+            if (submissions == null)
             {
                 return new BuildResult 
                 {
@@ -58,10 +59,30 @@ public class TestManager
             """))
             .WithFilePath("GlobalUsings.cs");
 
-            List<SyntaxTree> syntaxTree = submissions.Where(el => !string.IsNullOrEmpty(el.SourceCode))
+            var syntaxTrees = submissions.SourceFiles.Where(el => !string.IsNullOrEmpty(el.SourceCode))
                             .Select(el => { 
+                                // remove main method for non-test source codes
                                 var source = SourceText.From(el.SourceCode);
-                                return CSharpSyntaxTree.ParseText(source).WithFilePath(el.Filename);
+                                var tree = CSharpSyntaxTree.ParseText(source).WithFilePath(el.Filename);
+                                var root = tree.GetRoot();
+                                var main = root.DescendantNodes()
+                                               .OfType<MethodDeclarationSyntax>()
+                                               .FirstOrDefault(m => m.Identifier.Text == "Main");
+
+                                if (main == null)
+                                {
+                                    return tree;
+                                }
+
+                                var newRoot = root.RemoveNode(main, SyntaxRemoveOptions.KeepExteriorTrivia);
+                                var classNode = main.Parent as ClassDeclarationSyntax;
+                                if (classNode != null && !classNode.Members.Any())
+                                {
+                                    // remove the class if it has no members
+                                    newRoot = newRoot!.RemoveNode(classNode, SyntaxRemoveOptions.KeepNoTrivia);
+                                }
+
+                                return SyntaxFactory.SyntaxTree(newRoot!);
                             }).Prepend(implicingUsings).ToList();
 
             var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
@@ -84,12 +105,38 @@ public class TestManager
                                                             .WithWarningLevel(1);
 
             var compilation = CSharpCompilation.Create(assemblyName)
-                                            .WithOptions(compilationOptions)
-                                            .AddReferences(references)
-                                            .AddSyntaxTrees(syntaxTree);
+                                               .WithOptions(compilationOptions)
+                                               .AddReferences(references)
+                                               .AddSyntaxTrees(syntaxTrees);
+
+            // FIXME: suppression does not work for whatever reason, so here is a workaround
+            var errors = compilation.GetDiagnostics().Where(el => el.Id != "CS5001" && el.Severity == DiagnosticSeverity.Error);
+            if (errors.Count() > 0)
+            {
+                return new BuildResult 
+                { 
+                    Status = StatusType.ERROR, 
+                    CompilatioErrors = Diagnostics(errors),
+                };
+            }
+
+            // there should be only one test file
+            if (string.IsNullOrEmpty(submissions.SourceCodeTest)) 
+            {
+                return new BuildResult 
+                { 
+                    Status = StatusType.ERROR, 
+                    Message = "no test provided",
+                };
+            }
+
+            var testTree = CSharpSyntaxTree.ParseText(SourceText.From(submissions.SourceCodeTest))
+                                           .WithFilePath(Path.GetRandomFileName() + ".cs");
+            var completeTree = syntaxTrees.Append(testTree);
+
+            compilation = compilation.RemoveAllSyntaxTrees().AddSyntaxTrees(completeTree);
 
             var emitResult = compilation.Emit(assemblyName);
-            var errors = emitResult.Diagnostics.Where(el => el.Severity == DiagnosticSeverity.Error);
             if (emitResult.Success && errors.Count() == 0)
             {
                 return new BuildResult { Status = StatusType.OK };
@@ -99,7 +146,7 @@ public class TestManager
                 return new BuildResult 
                 { 
                     Status = StatusType.ERROR, 
-                    CompilatioErrors = Diagnostics(errors),
+                    CompilatioErrors = Diagnostics(emitResult.Diagnostics.Where(el => el.Severity == DiagnosticSeverity.Error)),
                 };
             }
         } 
@@ -108,7 +155,7 @@ public class TestManager
             return new BuildResult 
             { 
                 Status = StatusType.INTERNAL_ERROR,
-                Message = e.StackTrace ?? e.Message,
+                Message = e.Message,
             };
         }
     }

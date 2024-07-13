@@ -41,7 +41,7 @@ func (g Golang) Prep() (string, error) {
 		return tempDir, err
 	}
 
-	if err := WriteSourceCodes(tempDir, g.Submission.SourceCode); err != nil {
+	if err := WriteSourceCodes(tempDir, g.Submission.SourceFiles); err != nil {
 		return tempDir, err
 	}
 

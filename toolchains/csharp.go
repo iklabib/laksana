@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -68,11 +67,8 @@ func (cs CSharp) Prep() (string, error) {
 	os.Mkdir(filepath.Join(tempDir, "/etc"), 0o751)
 
 	// NUnit looking for /etc/passwd for whatever reason
-	// os.Mkdir(filepath.Join(tempDir, "etc"), 0o711)
 	passwd := "ubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash"
-	if err := util.CreateROFile(filepath.Join(tempDir, "etc", "passwd"), passwd); err != nil {
-		return tempDir, errors.New("internal error: failed to write passwd")
-	}
+	util.CreateROFile(filepath.Join(tempDir, "etc", "passwd"), passwd)
 
 	runnerDest := filepath.Join(tempDir, "CSharp")
 	runnerSource := filepath.Join("runner", "CSharp", "output")
@@ -86,13 +82,11 @@ func (cs CSharp) Prep() (string, error) {
 }
 
 func (cs CSharp) Build(dir string, sandbox containers.Sandbox) ([]model.BuildError, error) {
-	testSubmission := model.SourceFile{
-		Filename:   util.RandomString() + ".cs",
-		Path:       "",
-		SourceCode: cs.Submission.SourceCodeTest,
+	submissions := model.SourceCode{
+		SourceCodeTest: cs.Submission.SourceCodeTest,
+		SourceCodes:    cs.Submission.SourceFiles,
 	}
 
-	submissions := append(cs.Submission.SourceCode, testSubmission)
 	marshaled, err := json.Marshal(submissions)
 	if err != nil {
 		return nil, err
@@ -102,9 +96,7 @@ func (cs CSharp) Build(dir string, sandbox containers.Sandbox) ([]model.BuildErr
 	result := sandbox.ExecConfinedWithStdin(dir, commands, bytes.NewReader(marshaled))
 
 	if result.Error != nil {
-		if exitCode := util.GetExitCode(&result.Error); exitCode > 1 {
-			return nil, result.Error
-		}
+		return nil, fmt.Errorf("internal error: %s", &result.Stdout)
 	}
 
 	buildResult := struct {

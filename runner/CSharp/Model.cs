@@ -29,6 +29,15 @@ public class CompileError
 
 public class Submission 
 {
+    [JsonPropertyName("src_test")] 
+    public string SourceCodeTest {get; set;}
+
+    [JsonPropertyName("src")] 
+    public SourceFile[] SourceFiles {get; set;}
+}
+
+public class SourceFile
+{
     [JsonPropertyName("filename")] 
     public string Filename {get; set;}
 
@@ -43,8 +52,14 @@ public class TestResult
 {
     [JsonPropertyName("status")] 
     public string Status {get; set;}
+
+    [JsonPropertyName("name")] 
     public string Name {get; set;}
+
+    [JsonPropertyName("output")] 
     public string Output {get; set;}
+
+    [JsonPropertyName("order")] 
     public int Order {get; set;}
 }
 

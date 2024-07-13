@@ -20,7 +20,7 @@ type RunResult struct {
 type Submission struct {
 	SourceCodeTest string       `json:"src_test"`
 	Type           string       `json:"type"`
-	SourceCode     []SourceFile `json:"src"`
+	SourceFiles    []SourceFile `json:"src"`
 }
 
 type SourceFile struct {
@@ -47,4 +47,9 @@ type TestResult struct {
 	Name   string `json:"name"`
 	Output string `json:"output"`
 	Order  int    `json:"order"`
+}
+
+type SourceCode struct {
+	SourceCodeTest string       `json:"src_test"`
+	SourceCodes    []SourceFile `json:"src"`
 }
