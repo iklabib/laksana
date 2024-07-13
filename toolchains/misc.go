@@ -25,10 +25,10 @@ func CreateBox(workdir string) (string, error) {
 
 func WriteSourceCodes(dir string, sourceFiles []model.SourceFile) error {
 	for _, src := range sourceFiles {
-		filePath := filepath.Join(dir, src.Name)
+		filePath := filepath.Join(dir, src.Filename)
 		err := util.CreateROFile(filePath, src.SourceCode)
 		if err != nil {
-			return fmt.Errorf("failed to write %s", src.Name)
+			return fmt.Errorf("failed to write %s", src.Filename)
 		}
 	}
 	return nil

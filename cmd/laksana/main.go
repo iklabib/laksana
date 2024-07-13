@@ -1,84 +1,49 @@
 package main
 
 import (
-    "context"
-    "encoding/json"
-    "errors"
-    "fmt"
-    "log"
-    "net/http"
-    "os"
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
 
-    "codeberg.org/iklabib/laksana/model"
-    "codeberg.org/iklabib/laksana/toolchains"
-    "codeberg.org/iklabib/laksana/util"
+	"codeberg.org/iklabib/laksana/model"
+	"codeberg.org/iklabib/laksana/toolchains"
 )
 
 func main() {
-    BaseUrl := os.Getenv("BASE_URL")
+	BaseUrl := os.Getenv("BASE_URL")
 
-    workdir := "/tmp/laksana"
-    if err := os.Mkdir(workdir, 0o775); err != nil {
-        log.Panicln(fmt.Errorf("failed to create workdir"))
-    }
+	workdir := "/tmp/laksana"
+	if err := os.Mkdir(workdir, 0o775); err != nil {
+		if !os.IsExist(err) {
+			log.Panicln("failed to create workdir")
+		}
+	}
 
-    mux := http.NewServeMux()
-    mux.HandleFunc("/run", func(w http.ResponseWriter, r *http.Request) {
-        w.Header().Set("Content-Type", "application/json")
+	evaluator := toolchains.NewEvaluator(workdir)
 
-        if r.Method != "POST" {
-            w.WriteHeader(http.StatusMethodNotAllowed)
-            return
-        }
+	mux := http.NewServeMux()
+	mux.HandleFunc("POST /run", func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
 
-        var submission model.Submission
-        if err := json.NewDecoder(r.Body).Decode(&submission); err != nil {
-            http.Error(w, err.Error(), http.StatusBadRequest)
-            return
-        }
+		var submission model.Submission
+		if err := json.NewDecoder(r.Body).Decode(&submission); err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
-        ctx := r.Context()
-        evaluator := toolchains.NewEvaluator(workdir)
-        resultChan := make(chan model.RunResult)
+		eval := evaluator.Eval(r.Context(), submission)
 
-        go func() {
-            defer close(resultChan)
-            resultChan <- evaluator.Submission(ctx, submission)
-        }()
+		result, err := json.Marshal(eval)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		w.Write(result)
+	})
 
-        select {
-        case <-ctx.Done():
-            var res model.RunResult
-            if err := ctx.Err(); !errors.Is(err, context.Canceled) {
-                res = model.RunResult{
-                    ExitCode: util.GetExitCode(&err),
-                    Message:  err.Error(),
-                }
-            } else {
-                res = model.RunResult{
-                    ExitCode: util.GetExitCode(&err),
-                    Message:  "canceled",
-                }
-            }
-
-            result, err := json.Marshal(res)
-            if err != nil {
-                http.Error(w, err.Error(), http.StatusInternalServerError)
-                return
-            }
-            w.Write(result)
-
-        case res := <-resultChan:
-            result, err := json.Marshal(res)
-            if err != nil {
-                http.Error(w, err.Error(), http.StatusInternalServerError)
-                return
-            }
-            w.Write(result)
-        }
-    })
-
-    fmt.Printf("Serving at %s \n", BaseUrl)
-    err := http.ListenAndServe(BaseUrl, mux)
-    log.Fatal(err)
+	fmt.Printf("Serving at %s \n", BaseUrl)
+	err := http.ListenAndServe(BaseUrl, mux)
+	log.Fatal(err)
 }

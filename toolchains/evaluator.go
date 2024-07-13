@@ -2,13 +2,12 @@ package toolchains
 
 import (
 	"context"
+	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"codeberg.org/iklabib/laksana/containers"
 	"codeberg.org/iklabib/laksana/model"
-	"codeberg.org/iklabib/laksana/util"
 )
 
 type Evaluator struct {
@@ -21,54 +20,70 @@ func NewEvaluator(workdir string) *Evaluator {
 	}
 }
 
+func (ev Evaluator) Eval(ctx context.Context, submission model.Submission) model.RunResult {
+	resultChan := make(chan model.RunResult)
+
+	go func() {
+		defer close(resultChan)
+		resultChan <- ev.Submission(ctx, submission)
+	}()
+
+	select {
+	case <-ctx.Done():
+		var message string
+		if err := ctx.Err(); !errors.Is(err, context.Canceled) {
+			message = "canceled"
+		} else {
+			message = err.Error()
+		}
+
+		return model.RunResult{Message: message}
+
+	case res := <-resultChan:
+		return res
+	}
+}
+
 func (ev Evaluator) Submission(ctx context.Context, submission model.Submission) model.RunResult {
 	switch submission.Type {
-	case "python":
-		configPath, _ := filepath.Abs("configs/minijail/minijail.cfg")
-		minijail := containers.NewMinijail(ctx, configPath)
-		python := NewPython()
-		dir, err := python.Prep(submission)
-		if err != nil {
-			return model.RunResult{
-				ExitCode: model.INTERNAL_ERROR,
-				Message:  err.Error(),
-			}
-		}
-
-		return python.Eval(dir, minijail)
-
 	case "go":
-		configPath, _ := filepath.Abs("configs/minijail/go.cfg")
-		minijail := containers.NewMinijail(ctx, configPath)
-		golang := NewGolang(ctx, ev.Workdir)
-		dir, err := golang.Prep(submission)
-		if err != nil {
-			return model.RunResult{
-				ExitCode: model.INTERNAL_ERROR,
-				Message:  err.Error(),
-			}
-		}
-
-		result := golang.Eval(dir, minijail)
-		if err := os.RemoveAll(dir); err != nil {
-			return model.RunResult{
-				ExitCode: util.GetExitCode(&err),
-				Message:  err.Error(),
-			}
-		}
-
-		return result
+		return ev.EvalCSharp(ctx, submission)
 
 	case "csharp":
-		configPath, _ := filepath.Abs("configs/minijail/csharp.cfg")
-		minijail := containers.NewMinijail(ctx, configPath)
-		csharp := NewCSharp(ev.Workdir)
-		return csharp.Run(minijail)
+		return ev.EvalCSharp(ctx, submission)
 
 	default:
 		return model.RunResult{
-			ExitCode: -1,
-			Message:  fmt.Sprintf(`"%s is not supported"`, submission.Type),
+			Message: fmt.Sprintf(`"%s is not supported"`, submission.Type),
 		}
 	}
+}
+
+func (ev Evaluator) EvalGo(ctx context.Context, submission model.Submission) model.RunResult {
+	configPath, _ := filepath.Abs("configs/minijail/go.cfg")
+	minijail := containers.NewMinijail(ctx, configPath)
+	golang := NewGolang(ctx, ev.Workdir)
+	result := golang.Run(minijail)
+	return result
+}
+
+func (ev Evaluator) EvalCSharp(ctx context.Context, submission model.Submission) model.RunResult {
+	configPath, _ := filepath.Abs("configs/minijail/csharp.cfg")
+	minijail := containers.NewMinijail(ctx, configPath)
+	csharp := NewCSharp(ev.Workdir, submission)
+	return csharp.Run(minijail)
+}
+
+func (ev Evaluator) EvalPython(ctx context.Context, submission model.Submission) model.RunResult {
+	configPath, _ := filepath.Abs("configs/minijail/minijail.cfg")
+	minijail := containers.NewMinijail(ctx, configPath)
+	python := NewPython()
+	dir, err := python.Prep(submission)
+	if err != nil {
+		return model.RunResult{
+			Message: err.Error(),
+		}
+	}
+
+	return python.Eval(dir, minijail)
 }

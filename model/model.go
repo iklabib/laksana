@@ -11,10 +11,10 @@ const (
 
 // run stage model
 type RunResult struct {
-	Message  string       `json:"message"`
-	Builds   []BuildError `json:"builds"`
-	Tests    []TestResult `json:"tests"`
-	ExitCode int          `json:"exit_code"`
+	Success bool         `json:"success"`
+	Message string       `json:"message"`
+	Builds  []BuildError `json:"builds"`
+	Tests   []TestResult `json:"tests"`
 }
 
 type Submission struct {
@@ -24,7 +24,7 @@ type Submission struct {
 }
 
 type SourceFile struct {
-	Name       string `json:"name"`
+	Filename   string `json:"filename"`
 	Path       string `json:"path,omitempty"`
 	SourceCode string `json:"src"`
 }
@@ -36,15 +36,15 @@ type SandboxExecResult struct {
 }
 
 type BuildError struct {
-	Filename  string `json:"name"`
+	Filename  string `json:"filename"`
 	Message   string `json:"message"`
 	Line      int    `json:"line"`
 	Character int    `json:"character"`
 }
 
 type TestResult struct {
-	Status string // PASSED or FAILED
-	Name   string
-	Output string
-	Order  int
+	Status string `json:"status"` // PASSED or FAILED
+	Name   string `json:"name"`
+	Output string `json:"output"`
+	Order  int    `json:"order"`
 }

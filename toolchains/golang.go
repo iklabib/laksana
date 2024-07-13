@@ -19,6 +19,8 @@ import (
 	"codeberg.org/iklabib/laksana/util"
 )
 
+var executable string = "/bin/bash"
+
 type Golang struct {
 	Ctx        context.Context
 	Workdir    string
@@ -32,20 +34,19 @@ func NewGolang(ctx context.Context, workdir string) *Golang {
 	}
 }
 
-func (g Golang) Prep(submission model.Submission) (string, error) {
+func (g Golang) Prep() (string, error) {
 	cwd, _ := os.Getwd()
 	tempDir, err := CreateBox(g.Workdir)
 	if err != nil {
 		return tempDir, err
 	}
 
-	err = WriteSourceCodes(tempDir, submission.SourceCode)
-	if err != nil {
+	if err := WriteSourceCodes(tempDir, g.Submission.SourceCode); err != nil {
 		return tempDir, err
 	}
 
-	err = util.CreateROFile(filepath.Join(tempDir, "main_test.go"), submission.SourceCodeTest)
-	if err != nil {
+	srcTest := filepath.Join(tempDir, "main_test.go")
+	if err := util.CreateROFile(srcTest, g.Submission.SourceCodeTest); err != nil {
 		return tempDir, errors.New("failed to write main_test.go")
 	}
 
@@ -61,7 +62,7 @@ func (g Golang) Prep(submission model.Submission) (string, error) {
 	return tempDir, nil
 }
 
-func (g Golang) buildTest(executable, dir string) (bytes.Buffer, error) {
+func (g Golang) buildTest(dir string) (bytes.Buffer, error) {
 	stderr := bytes.Buffer{}
 	cmd := exec.Command(executable, "run.bash", "build-test")
 	cmd.Stderr = &stderr
@@ -70,17 +71,7 @@ func (g Golang) buildTest(executable, dir string) (bytes.Buffer, error) {
 	return stderr, err
 }
 
-func (g Golang) Eval(dir string, sandbox containers.Sandbox) model.RunResult {
-	executable := "/bin/bash"
-
-	if stderr, err := g.buildTest(executable, dir); err != nil {
-		return model.RunResult{
-			ExitCode: util.GetExitCode(&err),
-			Message:  err.Error(),
-			Builds:   g.ParseCompileErrors(stderr),
-		}
-	}
-
+func (g Golang) Eval(dir string, sandbox containers.Sandbox) ([]model.TestResult, error) {
 	commands := []string{executable, "run.bash", "run"}
 	execResult := sandbox.ExecConfined(dir, commands)
 
@@ -88,16 +79,37 @@ func (g Golang) Eval(dir string, sandbox containers.Sandbox) model.RunResult {
 	// it is likely because of test fail, not actual error
 	exitCode := util.GetExitCode(&execResult.Error)
 	if exitCode > 1 {
+		return nil, execResult.Error
+	}
+
+	return g.ParseTestEvent(execResult.Stdout), nil
+}
+
+func (g Golang) Run(sandbox containers.Sandbox) model.RunResult {
+	dir, err := g.Prep()
+	if err != nil {
+		return model.RunResult{Message: err.Error()}
+	}
+
+	defer func() {
+		os.RemoveAll(dir)
+	}()
+
+	if stderr, err := g.buildTest(dir); err != nil {
 		return model.RunResult{
-			ExitCode: exitCode,
-			Message:  execResult.Error.Error(),
+			Message: err.Error(),
+			Builds:  g.ParseCompileErrors(stderr),
 		}
 	}
 
-	testResult := g.ParseTestEvent(execResult.Stdout)
+	testResult, err := g.Eval(dir, sandbox)
+	if err != nil {
+		return model.RunResult{Message: err.Error()}
+	}
+
 	return model.RunResult{
-		ExitCode: exitCode,
-		Tests:    testResult,
+		Success: true,
+		Tests:   testResult,
 	}
 }
 

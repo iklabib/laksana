@@ -5,7 +5,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
-	"log"
+	"fmt"
+	"os"
 	"os/exec"
 	"path/filepath"
 
@@ -14,41 +15,47 @@ import (
 	"codeberg.org/iklabib/laksana/util"
 )
 
+var executableName = "LittleRosie"
+
 type CSharp struct {
 	Ctx        context.Context
 	Workdir    string
 	Submission model.Submission
 }
 
-func NewCSharp(workdir string) *CSharp {
+func NewCSharp(workdir string, Submission model.Submission) *CSharp {
 	return &CSharp{
-		Workdir: workdir,
+		Workdir:    workdir,
+		Submission: Submission,
 	}
 }
 
 func (cs CSharp) Run(sandbox containers.Sandbox) model.RunResult {
 	dir, err := cs.Prep()
 	if err != nil {
-		err = errors.New("preparation failure")
-		return model.RunResult{
-			ExitCode: model.INTERNAL_ERROR,
-			Message:  err.Error(),
-		}
+		return model.RunResult{Message: err.Error()}
 	}
+
+	defer func() {
+		os.RemoveAll(dir)
+	}()
 
 	if buildErrors, err := cs.Build(dir, sandbox); err != nil {
 		return model.RunResult{
-			ExitCode: util.GetExitCode(&err),
-			Message:  err.Error(),
-			Builds:   buildErrors,
+			Message: err.Error(),
+			Builds:  buildErrors,
 		}
 	}
 
-	runResult := cs.Eval(dir, sandbox)
+	testResult, err := cs.Eval(dir, sandbox)
+	if err != nil {
+		return model.RunResult{Message: err.Error()}
+	}
 
-	// os.RemoveAll(dir)
-
-	return runResult
+	return model.RunResult{
+		Success: true,
+		Tests:   testResult,
+	}
 }
 
 func (cs CSharp) Prep() (string, error) {
@@ -57,15 +64,21 @@ func (cs CSharp) Prep() (string, error) {
 		return tempDir, err
 	}
 
-	scriptDest := filepath.Join(tempDir, "run.bash")
-	scriptSource := filepath.Join("runner", "CSharp", "run.bash")
-	if err := util.Copy(scriptSource, scriptDest); err != nil {
-		return tempDir, err
+	os.Mkdir(filepath.Join(tempDir, "/dev"), 0o751)
+	os.Mkdir(filepath.Join(tempDir, "/etc"), 0o751)
+
+	// NUnit looking for /etc/passwd for whatever reason
+	// os.Mkdir(filepath.Join(tempDir, "etc"), 0o711)
+	passwd := "ubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash"
+	if err := util.CreateROFile(filepath.Join(tempDir, "etc", "passwd"), passwd); err != nil {
+		return tempDir, errors.New("internal error: failed to write passwd")
 	}
 
-	runnerDest := filepath.Join(tempDir, "output")
+	runnerDest := filepath.Join(tempDir, "CSharp")
 	runnerSource := filepath.Join("runner", "CSharp", "output")
-	if err := exec.Command("cp", "-r", runnerSource, runnerDest).Run(); err != nil {
+
+	err = exec.Command("cp", "-r", runnerSource, runnerDest).Run()
+	if err != nil {
 		return tempDir, err
 	}
 
@@ -73,52 +86,63 @@ func (cs CSharp) Prep() (string, error) {
 }
 
 func (cs CSharp) Build(dir string, sandbox containers.Sandbox) ([]model.BuildError, error) {
-	var compileErrors []model.BuildError
-
 	testSubmission := model.SourceFile{
-		Name:       "Test.cs",
+		Filename:   util.RandomString() + ".cs",
 		Path:       "",
 		SourceCode: cs.Submission.SourceCodeTest,
 	}
+
 	submissions := append(cs.Submission.SourceCode, testSubmission)
 	marshaled, err := json.Marshal(submissions)
 	if err != nil {
-		log.Println("marshal failure")
-		return compileErrors, err
+		return nil, err
 	}
 
-	commands := []string{"/bin/bash", "run.bash", "build"}
+	commands := []string{filepath.Join("CSharp", executableName), "build"}
 	result := sandbox.ExecConfinedWithStdin(dir, commands, bytes.NewReader(marshaled))
 
-	exitCode := util.GetExitCode(&result.Error)
-	if exitCode > 1 {
-		return compileErrors, result.Error
+	if result.Error != nil {
+		if exitCode := util.GetExitCode(&result.Error); exitCode > 1 {
+			return nil, result.Error
+		}
 	}
 
-	err = json.Unmarshal(result.Stdout.Bytes(), &compileErrors)
-	return compileErrors, err
+	buildResult := struct {
+		Status  int                `json:"status"`
+		Message string             `json:"message"`
+		Builds  []model.BuildError `json:"compilation_errors"`
+	}{}
+
+	if err := json.Unmarshal(result.Stdout.Bytes(), &buildResult); err != nil {
+		return nil, err
+	}
+
+	switch buildResult.Status {
+	case 0: // success
+		return nil, nil
+	case 1: // compilation error
+		return buildResult.Builds, nil
+	case 2: // internal error
+		return nil, fmt.Errorf("internal error: %s", buildResult.Message)
+	default:
+		return nil, fmt.Errorf("internal error: unknown status '%d'", buildResult.Status)
+	}
 }
 
-func (cs CSharp) Eval(dir string, sandbox containers.Sandbox) model.RunResult {
-	commands := []string{"/bin/bash", "run.bash", "execute"}
-	result := sandbox.ExecConfined(dir, commands)
-	exitCode := util.GetExitCode(&result.Error)
-	if exitCode > 1 {
-		return model.RunResult{
-			ExitCode: exitCode,
+func (cs CSharp) Eval(dir string, sandbox containers.Sandbox) ([]model.TestResult, error) {
+	executable := filepath.Join("CSharp", executableName)
+	result := sandbox.ExecConfined(dir, []string{executable, "execute", "main.dll"})
+
+	if result.Error != nil {
+		if exitCode := util.GetExitCode(&result.Error); exitCode > 1 {
+			return nil, result.Error
 		}
 	}
 
 	var testResult []model.TestResult
 	if err := json.Unmarshal(result.Stdout.Bytes(), &testResult); err != nil {
-		return model.RunResult{
-			ExitCode: util.GetExitCode(&err),
-			Message:  "unmarshal failure",
-		}
+		return nil, err
 	}
 
-	return model.RunResult{
-		ExitCode: 0,
-		Tests:    testResult,
-	}
+	return testResult, nil
 }
