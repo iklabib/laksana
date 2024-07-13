@@ -9,7 +9,9 @@ using System.Xml;
 
 public class TestManager 
 { 
-    public string Run(string assemblyName) 
+    private string assemblyName = "main.dll";
+
+    public string Run() 
     {
         using var engine = TestEngineActivator.CreateInstance();
         var assembly = Assembly.LoadFrom(assemblyName);
@@ -20,7 +22,7 @@ public class TestManager
         return parseTestResult(testResult);
     }
 
-    public BuildResult Build(string assemblyName, string lines) 
+    public BuildResult Build(string lines) 
     {
         try 
         {
@@ -33,8 +35,8 @@ public class TestManager
                 };
             }
 
-            var submissions = JsonSerializer.Deserialize<Submission[]>(lines);
-            if (submissions == null || submissions.Count() == 0)
+            var submissions = JsonSerializer.Deserialize<List<Submission>>(lines) ?? new List<Submission>();
+            if (submissions.Count() == 0)
             {
                 return new BuildResult 
                 {
@@ -56,26 +58,27 @@ public class TestManager
             """))
             .WithFilePath("GlobalUsings.cs");
 
-            var syntaxTree = submissions.Where(el => !el.IsTest)
+            List<SyntaxTree> syntaxTree = submissions.Where(el => !string.IsNullOrEmpty(el.SourceCode))
                             .Select(el => { 
-                                var source = SourceText.From(el.Content);
+                                var source = SourceText.From(el.SourceCode);
                                 return CSharpSyntaxTree.ParseText(source).WithFilePath(el.Filename);
-                            })
-                            .Prepend(implicingUsings).ToList();
+                            }).Prepend(implicingUsings).ToList();
 
             var references = ((string)AppContext.GetData("TRUSTED_PLATFORM_ASSEMBLIES")!)
                             .Split(Path.PathSeparator)
                             .Where(el => !string.IsNullOrEmpty(el))
                             .Select(el => MetadataReference.CreateFromFile(el));
 
-            // FIXME: suppression does not work
-            var diagnosticOptions = new Dictionary<string, ReportDiagnostic>
+            if (references.Count() == 0) 
             {
-                { "CS5001", ReportDiagnostic.Suppress }
-            };
+                return new BuildResult 
+                {
+                    Status = StatusType.INTERNAL_ERROR,
+                    Message = "no trusted assemblies",
+                };
+            }
 
-            CSharpCompilationOptions compilationOptions = new CSharpCompilationOptions(OutputKind.ConsoleApplication)
-                                                            .WithSpecificDiagnosticOptions(diagnosticOptions)
+            var compilationOptions = new CSharpCompilationOptions(OutputKind.ConsoleApplication)
                                                             .WithOptimizationLevel(OptimizationLevel.Release)
                                                             .WithPlatform(Platform.X64)
                                                             .WithWarningLevel(1);
@@ -85,41 +88,18 @@ public class TestManager
                                             .AddReferences(references)
                                             .AddSyntaxTrees(syntaxTree);
 
-            var errors = compilation.GetDiagnostics().Where(el => el.Id != "CS5001" && el.Severity == DiagnosticSeverity.Error);
-            if (errors.Count() > 0)
-            {
-                return new BuildResult 
-                {
-                    Status = StatusType.ERROR,
-                    CompilatioErrors = Diagnostics(errors),
-                };
-            }
-
-            var testSyntaxTree = submissions.Where(el => el.IsTest)
-                                    .Select(el => { 
-                                        var source = SourceText.From(el.Content);
-                                        return CSharpSyntaxTree.ParseText(source).WithFilePath(el.Filename);
-                                    }).ToList();
-
-            syntaxTree.AddRange(testSyntaxTree);
-
-            compilation = compilation.RemoveAllSyntaxTrees().AddSyntaxTrees(syntaxTree);
-
             var emitResult = compilation.Emit(assemblyName);
-            if (emitResult.Success)
+            var errors = emitResult.Diagnostics.Where(el => el.Severity == DiagnosticSeverity.Error);
+            if (emitResult.Success && errors.Count() == 0)
             {
-                return new BuildResult 
-                { 
-                    Status = StatusType.OK 
-                };
+                return new BuildResult { Status = StatusType.OK };
             }
             else
             {
-                var compilationError = Diagnostics(emitResult.Diagnostics.Where(el => el.Severity == DiagnosticSeverity.Error));
                 return new BuildResult 
                 { 
-                    Status = StatusType.OK, 
-                    CompilatioErrors = compilationError 
+                    Status = StatusType.ERROR, 
+                    CompilatioErrors = Diagnostics(errors),
                 };
             }
         } 
@@ -128,7 +108,7 @@ public class TestManager
             return new BuildResult 
             { 
                 Status = StatusType.INTERNAL_ERROR,
-                Message = e.Message,
+                Message = e.StackTrace ?? e.Message,
             };
         }
     }
@@ -143,7 +123,7 @@ public class TestManager
             var compileError = new CompileError {
                 Filename = location.SourceTree?.FilePath ?? "",
                 Message = d.GetMessage(),
-                Line = line.Line + 1,
+                Line = line.Line,
                 Character = line.Character,
             };
             compilationError.Add(compileError);

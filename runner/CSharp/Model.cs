@@ -8,7 +8,7 @@ public class BuildResult
     [JsonPropertyName("message")]
     public string Message {get; set;}
 
-    [JsonPropertyName("compilation_erros")]
+    [JsonPropertyName("compilation_errors")]
     public CompileError[] CompilatioErrors {get; set;}
 }
 
@@ -32,15 +32,16 @@ public class Submission
     [JsonPropertyName("filename")] 
     public string Filename {get; set;}
 
-    [JsonPropertyName("content")] 
-    public string Content {get; set;}
+    [JsonPropertyName("path")] 
+    public string Path {get; set;}
 
-    [JsonPropertyName("is_test")] 
-    public bool IsTest {get; set;} = false;
+    [JsonPropertyName("src")] 
+    public string SourceCode {get; set;}
 }
 
 public class TestResult
 {
+    [JsonPropertyName("status")] 
     public string Status {get; set;}
     public string Name {get; set;}
     public string Output {get; set;}
