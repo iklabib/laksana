@@ -46,6 +46,6 @@ WORKDIR /app
 COPY --from=build /build/laksana .
 COPY configs/ configs/
 COPY runner/ runner/
-RUN runner/CSharp/build.bash
+RUN --mount=type=cache,id=nuget,target=/root/.nuget/packages runner/CSharp/build.bash
 
 ENTRYPOINT [ "/app/laksana" ]
