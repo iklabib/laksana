@@ -74,6 +74,8 @@ func (cs CSharp) Prep() (string, error) {
 	runnerDest := filepath.Join(tempDir, "CSharp")
 	runnerSource := filepath.Join("runner", "CSharp", "output")
 
+	// FIXME: it would better not to copy runner for every box
+	// linking and binding doesn't seem to work
 	err = exec.Command("cp", "-r", runnerSource, runnerDest).Run()
 	if err != nil {
 		return tempDir, err
@@ -97,7 +99,7 @@ func (cs CSharp) Build(dir string, sandbox containers.Sandbox) ([]model.BuildErr
 	result := sandbox.ExecConfinedWithStdin(dir, commands, bytes.NewReader(marshaled))
 
 	if result.Error != nil {
-		return nil, fmt.Errorf("internal error: %s", &result.Stdout)
+		return nil, fmt.Errorf("internal error: %s", &result.Stderr)
 	}
 
 	buildResult := struct {
