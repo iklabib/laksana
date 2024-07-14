@@ -72,7 +72,7 @@ func (cs CSharp) Prep() (string, error) {
 	util.CreateROFile(filepath.Join(tempDir, "etc", "passwd"), passwd)
 
 	runnerDest := filepath.Join(tempDir, "CSharp")
-	runnerSource := filepath.Join("runner", "CSharp", "output")
+	runnerSource := filepath.Join("runner", "CSharp")
 
 	// FIXME: it would better not to copy runner for every box
 	// linking and binding doesn't seem to work
