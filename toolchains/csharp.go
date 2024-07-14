@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -127,7 +128,7 @@ func (cs CSharp) Eval(dir string, sandbox containers.Sandbox) ([]model.TestResul
 
 	if result.Error != nil {
 		if exitCode := util.GetExitCode(&result.Error); exitCode > 1 {
-			return nil, result.Error
+			return nil, errors.New(result.Stderr.String())
 		}
 	}
 
