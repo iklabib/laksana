@@ -31,7 +31,7 @@ func (ev Evaluator) Eval(ctx context.Context, submission model.Submission) model
 	select {
 	case <-ctx.Done():
 		var message string
-		if err := ctx.Err(); !errors.Is(err, context.Canceled) {
+		if err := ctx.Err(); errors.Is(err, context.Canceled) {
 			message = "canceled"
 		} else {
 			message = err.Error()
@@ -47,7 +47,7 @@ func (ev Evaluator) Eval(ctx context.Context, submission model.Submission) model
 func (ev Evaluator) Submission(ctx context.Context, submission model.Submission) model.RunResult {
 	switch submission.Type {
 	case "go":
-		return ev.EvalCSharp(ctx, submission)
+		return ev.EvalGo(ctx, submission)
 
 	case "csharp":
 		return ev.EvalCSharp(ctx, submission)
