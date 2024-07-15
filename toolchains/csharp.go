@@ -129,7 +129,7 @@ func (cs CSharp) Eval(dir string, sandbox containers.Sandbox) ([]model.TestResul
 	result := sandbox.ExecConfined(dir, []string{executable, "execute", "main.dll"})
 
 	if result.Error != nil {
-		if exitCode := util.GetExitCode(&result.Error); exitCode > 1 {
+		if exitCode := util.GetExitCode(result.Error); exitCode > 1 {
 			return nil, errors.New(result.Stderr.String())
 		}
 	}

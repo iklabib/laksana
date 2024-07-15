@@ -1,6 +1,7 @@
 package util
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -9,12 +10,13 @@ import (
 	"codeberg.org/iklabib/laksana/util/fastrand"
 )
 
-func GetExitCode(err *error) int {
-	if (*err) == nil {
+func GetExitCode(err error) int {
+	if err == nil {
 		return 0
 	}
 
-	if exitError, ok := (*err).(*exec.ExitError); ok {
+	var exitError *exec.ExitError
+	if ok := errors.As(err, &exitError); ok {
 		return exitError.ExitCode()
 	}
 

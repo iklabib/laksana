@@ -77,7 +77,7 @@ func (g Golang) Eval(dir string, sandbox containers.Sandbox) ([]model.TestResult
 
 	// when exit code is 1 we can ignore it
 	// it is likely because of test fail, not actual error
-	exitCode := util.GetExitCode(&execResult.Error)
+	exitCode := util.GetExitCode(execResult.Error)
 	if exitCode > 1 {
 		return nil, execResult.Error
 	}
