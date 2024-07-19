@@ -66,6 +66,7 @@ func (cs CSharp) Prep() (string, error) {
 
 	os.Mkdir(filepath.Join(tempDir, "/dev"), 0o751)
 	os.Mkdir(filepath.Join(tempDir, "/etc"), 0o751)
+	// os.Mkdir(filepath.Join(tempDir, "/proc"), 0o511)
 
 	// NUnit looking for /etc/passwd for whatever reason
 	passwd := "ubuntu:x:1000:1000:Ubuntu:/home/ubuntu:/bin/bash"
@@ -126,11 +127,12 @@ func (cs CSharp) Build(dir string, sandbox containers.Sandbox) ([]model.BuildErr
 
 func (cs CSharp) Eval(dir string, sandbox containers.Sandbox) ([]model.TestResult, error) {
 	executable := filepath.Join("CSharp", executableName)
-	result := sandbox.ExecConfined(dir, []string{executable, "execute", "main.dll"})
+	result := sandbox.ExecConfined(dir, []string{executable, "execute"})
 
 	if result.Error != nil {
-		if exitCode := util.GetExitCode(result.Error); exitCode > 1 {
-			return nil, errors.New(result.Stderr.String())
+		msg := util.ExitMessage(result.Error)
+		if msg != "" {
+			return nil, errors.New(msg)
 		}
 	}
 

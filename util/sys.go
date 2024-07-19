@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"os/exec"
+	"syscall"
 
 	"codeberg.org/iklabib/laksana/util/fastrand"
 )
@@ -21,6 +22,60 @@ func GetExitCode(err error) int {
 	}
 
 	return 0
+}
+
+func GetSignal(err error) (os.Signal, bool) {
+	var exitError *exec.ExitError
+	if ok := errors.As(err, &exitError); !ok {
+		return nil, false
+	}
+
+	wt := exitError.Sys().(syscall.WaitStatus)
+	if wt.Signaled() {
+		return wt.Signal(), true
+	}
+
+	return nil, false
+}
+
+func signalAsMessage(signal os.Signal) string {
+	switch signal {
+	case syscall.SIGKILL:
+		return "killed"
+	case syscall.SIGXCPU:
+		return "timeout"
+	case syscall.SIGSEGV:
+		return "out of memory"
+	default:
+		return "unknown reason"
+	}
+}
+
+func ExitMessage(err error) string {
+	signal, ok := GetSignal(err)
+	if ok {
+		return signalAsMessage(signal)
+	}
+
+	exitCode := GetExitCode(err)
+
+	// FIXME: signal may not detected at times
+	// subtracting by 128 and check
+	switch exitCode - 128 {
+	case 9:
+		return signalAsMessage(syscall.SIGKILL)
+	case 24:
+		return signalAsMessage(syscall.SIGXCPU)
+	case 11:
+		return signalAsMessage(syscall.SIGSEGV)
+	}
+
+	// exit code 1 is likely because of failed test
+	if exitCode == 0 || exitCode == 1 {
+		return ""
+	} else {
+		return "internal error"
+	}
 }
 
 func CreateROFile(dest, data string) error {
