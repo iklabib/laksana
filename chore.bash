@@ -33,15 +33,10 @@ main() {
 		if [[ "$1" == "--apparmor" ]]; then
 			${CONTAINER_ENGINE} run --rm -it -p 31415:8000 \
 				--cap-add sys_admin \
-				--cap-add sys_resource \
-				--security-opt seccomp=profiles/seccomp/laksana.json \
-				--security-opt apparmor=laksana \
 				quay.io/iklabib/laksana
 		else
 			${CONTAINER_ENGINE} run --rm -it -p 31415:8000 \
 				--cap-add sys_admin \
-				--cap-add sys_resource \
-				--security-opt seccomp=profiles/seccomp/laksana.json \
 				quay.io/iklabib/laksana
 		fi
 	}
