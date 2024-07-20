@@ -18,8 +18,9 @@ type RunResult struct {
 }
 
 type Submission struct {
-	SourceCodeTest string       `json:"src_test"`
+	Id             string       `json:"id"`
 	Type           string       `json:"type"`
+	SourceCodeTest string       `json:"src_test"`
 	SourceFiles    []SourceFile `json:"src"`
 }
 
