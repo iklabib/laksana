@@ -73,17 +73,3 @@ func (ev Evaluator) EvalCSharp(ctx context.Context, submission model.Submission)
 	csharp := NewCSharp(ev.Workdir, submission)
 	return csharp.Run(minijail)
 }
-
-func (ev Evaluator) EvalPython(ctx context.Context, submission model.Submission) model.RunResult {
-	configPath, _ := filepath.Abs("configs/minijail/minijail.cfg")
-	minijail := containers.NewMinijail(ctx, configPath)
-	python := NewPython()
-	dir, err := python.Prep(submission)
-	if err != nil {
-		return model.RunResult{
-			Message: err.Error(),
-		}
-	}
-
-	return python.Eval(dir, minijail)
-}
