@@ -29,9 +29,7 @@ func NewMinijail(ctx context.Context, configPath string) Minijail {
 }
 
 func (mn Minijail) argsBuilder(dir string, commands []string) []string {
-	// keep in mind that minijail need absolute path
-	// is there a way for it to look in path without bash invocation?
-	args := []string{"--config", mn.ConfigPath, "-P", dir, "--"}
+	args := []string{"--config", mn.ConfigPath, "-C", dir, "--"}
 	return append(args, commands...)
 }
 
