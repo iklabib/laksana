@@ -24,6 +24,41 @@ func GetExitCode(err error) int {
 	return 0
 }
 
+// SIGIO, SIGIOT, SIGCLD, SIGUNUSED are archaic
+var knownSignals map[syscall.Signal]bool = map[syscall.Signal]bool{
+	syscall.SIGABRT:   true,
+	syscall.SIGALRM:   true,
+	syscall.SIGBUS:    true,
+	syscall.SIGCHLD:   true,
+	syscall.SIGCONT:   true,
+	syscall.SIGFPE:    true,
+	syscall.SIGHUP:    true,
+	syscall.SIGILL:    true,
+	syscall.SIGINT:    true,
+	syscall.SIGIO:     true,
+	syscall.SIGKILL:   true,
+	syscall.SIGPIPE:   true,
+	syscall.SIGPROF:   true,
+	syscall.SIGPWR:    true,
+	syscall.SIGQUIT:   true,
+	syscall.SIGSEGV:   true,
+	syscall.SIGSTKFLT: true,
+	syscall.SIGSTOP:   true,
+	syscall.SIGSYS:    true,
+	syscall.SIGTERM:   true,
+	syscall.SIGTRAP:   true,
+	syscall.SIGTSTP:   true,
+	syscall.SIGTTIN:   true,
+	syscall.SIGTTOU:   true,
+	syscall.SIGURG:    true,
+	syscall.SIGUSR1:   true,
+	syscall.SIGUSR2:   true,
+	syscall.SIGVTALRM: true,
+	syscall.SIGWINCH:  true,
+	syscall.SIGXCPU:   true,
+	syscall.SIGXFSZ:   true,
+}
+
 func GetSignal(err error) (os.Signal, bool) {
 	var exitError *exec.ExitError
 	if ok := errors.As(err, &exitError); !ok {
@@ -33,6 +68,13 @@ func GetSignal(err error) (os.Signal, bool) {
 	wt := exitError.Sys().(syscall.WaitStatus)
 	if wt.Signaled() {
 		return wt.Signal(), true
+	}
+
+	// FIXME: signal may not detected
+	// instead minijail return 128 + signal as exit code
+	sig := syscall.Signal(GetExitCode(err) - 128)
+	if knownSignals[sig] {
+		return sig, true
 	}
 
 	return nil, false
@@ -58,17 +100,6 @@ func ExitMessage(err error) string {
 	}
 
 	exitCode := GetExitCode(err)
-
-	// FIXME: signal may not detected at times
-	// subtracting by 128 and check
-	switch exitCode - 128 {
-	case 9:
-		return signalAsMessage(syscall.SIGKILL)
-	case 24:
-		return signalAsMessage(syscall.SIGXCPU)
-	case 11:
-		return signalAsMessage(syscall.SIGSEGV)
-	}
 
 	// exit code 1 is likely because of failed test
 	if exitCode == 0 || exitCode == 1 {
