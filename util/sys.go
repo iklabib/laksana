@@ -72,7 +72,7 @@ func GetSignal(err error) (os.Signal, bool) {
 
 	// FIXME: signal may not detected
 	// instead minijail return 128 + signal as exit code
-	sig := syscall.Signal(GetExitCode(err) - 128)
+	sig := syscall.Signal(exitError.ExitCode() - 128)
 	if knownSignals[sig] {
 		return sig, true
 	}
