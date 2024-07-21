@@ -30,7 +30,7 @@ func NewCSharp(workdir string, Submission model.Submission) *CSharp {
 	}
 }
 
-func (cs CSharp) Run(sandbox containers.Sandbox) model.RunResult {
+func (cs CSharp) Run(sandbox containers.Minijail) model.RunResult {
 	dir, err := cs.Prep()
 	if err != nil {
 		return model.RunResult{Message: err.Error()}
@@ -85,7 +85,7 @@ func (cs CSharp) Prep() (string, error) {
 	return tempDir, nil
 }
 
-func (cs CSharp) Build(dir string, sandbox containers.Sandbox) ([]model.BuildError, error) {
+func (cs CSharp) Build(dir string, sandbox containers.Minijail) ([]model.BuildError, error) {
 	submissions := model.SourceCode{
 		SourceCodeTest: cs.Submission.SourceCodeTest,
 		SourceCodes:    cs.Submission.SourceFiles,
@@ -125,7 +125,7 @@ func (cs CSharp) Build(dir string, sandbox containers.Sandbox) ([]model.BuildErr
 	}
 }
 
-func (cs CSharp) Eval(dir string, sandbox containers.Sandbox) ([]model.TestResult, error) {
+func (cs CSharp) Eval(dir string, sandbox containers.Minijail) ([]model.TestResult, error) {
 	executable := filepath.Join("CSharp", executableName)
 	result := sandbox.ExecConfined(dir, []string{executable, "execute"})
 

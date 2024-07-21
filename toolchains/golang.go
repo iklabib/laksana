@@ -71,7 +71,7 @@ func (g Golang) buildTest(dir string) (bytes.Buffer, error) {
 	return stderr, err
 }
 
-func (g Golang) Eval(dir string, sandbox containers.Sandbox) ([]model.TestResult, error) {
+func (g Golang) Eval(dir string, sandbox containers.Minijail) ([]model.TestResult, error) {
 	commands := []string{executable, "run.bash", "run"}
 	execResult := sandbox.ExecConfined(dir, commands)
 
@@ -85,7 +85,7 @@ func (g Golang) Eval(dir string, sandbox containers.Sandbox) ([]model.TestResult
 	return g.ParseTestEvent(execResult.Stdout), nil
 }
 
-func (g Golang) Run(sandbox containers.Sandbox) model.RunResult {
+func (g Golang) Run(sandbox containers.Minijail) model.RunResult {
 	dir, err := g.Prep()
 	if err != nil {
 		return model.RunResult{Message: err.Error()}

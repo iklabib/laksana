@@ -27,7 +27,9 @@ FROM docker.io/library/ubuntu:noble
 ADD https://packages.microsoft.com/config/ubuntu/24.04/packages-microsoft-prod.deb packages-microsoft-prod.deb
 RUN apt update && apt install -y ./packages-microsoft-prod.deb && rm packages-microsoft-prod.deb
 RUN apt update && apt install -y git libcap2 curl xz-utils dotnet-runtime-8.0
-RUN rm -rf /var/lib/apt/lists/*
+RUN apt install -y clang vim strace
+RUN apt install -y busybox
+# RUN rm -rf /var/lib/apt/lists/*
 
 ENV PATH=/usr/local/go/bin/:${PATH}
 ADD https://go.dev/dl/go1.22.5.linux-amd64.tar.gz go1.22.5.linux-amd64.tar.gz 
