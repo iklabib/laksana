@@ -46,9 +46,6 @@ func (ev Evaluator) Eval(ctx context.Context, submission model.Submission) model
 
 func (ev Evaluator) Submission(ctx context.Context, submission model.Submission) model.RunResult {
 	switch submission.Type {
-	case "go":
-		return ev.EvalGo(ctx, submission)
-
 	case "csharp":
 		return ev.EvalCSharp(ctx, submission)
 
@@ -57,14 +54,6 @@ func (ev Evaluator) Submission(ctx context.Context, submission model.Submission)
 			Message: fmt.Sprintf(`"%s is not supported"`, submission.Type),
 		}
 	}
-}
-
-func (ev Evaluator) EvalGo(ctx context.Context, submission model.Submission) model.RunResult {
-	configPath, _ := filepath.Abs("configs/minijail/go.cfg")
-	minijail := containers.NewMinijail(ctx, configPath)
-	golang := NewGolang(ctx, ev.Workdir)
-	result := golang.Run(minijail)
-	return result
 }
 
 func (ev Evaluator) EvalCSharp(ctx context.Context, submission model.Submission) model.RunResult {
